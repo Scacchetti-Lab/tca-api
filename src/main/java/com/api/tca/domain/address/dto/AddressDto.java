@@ -1,5 +1,6 @@
 package com.api.tca.domain.address.dto;
 
+import com.api.tca.domain.address.entity.AddressEntity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
@@ -28,4 +29,7 @@ public record AddressDto(
         @NotBlank
         String bairro
 ) {
+        public AddressDto(AddressEntity entity) {
+                this(entity.getPostalCode(), entity.getNumber(), entity.getName(), entity.getComplement(), entity.getState(), entity.getUf(), entity.getNeighborhood());
+        }
 }

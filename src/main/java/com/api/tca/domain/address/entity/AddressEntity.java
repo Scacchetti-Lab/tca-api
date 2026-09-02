@@ -35,7 +35,6 @@ public class AddressEntity {
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(columnDefinition = "CHAR(2)")
     private String uf;
-
     private String neighborhood;
 
     public AddressEntity(AddressDto dto) {
