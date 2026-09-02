@@ -5,32 +5,31 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
 
-public record AddressDto(
-
+public record AddressViaCepDto(
         @Pattern(regexp = "(\\d{5})-?(\\d{3})")
         @NotBlank
-        String postalCode,
+        String cep,
 
         @Length(min = 2, max = 5)
         @NotBlank
-        String number,
+        String numero,
 
         @NotBlank
-        String name,
+        String logradouro,
 
-        String complement,
+        String complemento,
 
         @NotBlank
-        String state,
+        String estado,
 
         @NotBlank
         @Length(min = 2, max = 2)
         String uf,
 
         @NotBlank
-        String neighborhood
+        String bairro
 ) {
-    public AddressDto(AddressEntity entity) {
-        this(entity.getPostalCode(), entity.getNumber(), entity.getName(), entity.getComplement(), entity.getState(), entity.getUf(), entity.getNeighborhood());
-    }
+        public AddressViaCepDto(AddressEntity entity) {
+                this(entity.getPostalCode(), entity.getNumber(), entity.getName(), entity.getComplement(), entity.getState(), entity.getUf(), entity.getNeighborhood());
+        }
 }

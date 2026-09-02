@@ -1,6 +1,7 @@
 package com.api.tca.domain.address.service;
 
 import com.api.tca.domain.address.dto.AddressDto;
+import com.api.tca.domain.address.dto.AddressViaCepDto;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.exception.AddressNotFound;
 import com.api.tca.domain.address.repository.AddressRepository;
@@ -22,17 +23,13 @@ public class AddressService {
     private AddressRepository addressRepository;
 
     @Transactional
-    public AddressEntity createAddressByPostalCode(String postalCode) throws Exception {
-        var addressDto = searchAddressByPostalCode(postalCode);
-        return createAddressByPostalCode(addressDto);
-    }
-
-    @Transactional
-    public AddressEntity createAddressByPostalCode(AddressDto addressDto) {
-        if (isAddressExistByPostalCode(addressDto.cep())) {
-            return addressRepository.findAddressByPostalCode(addressDto.cep());
+    public AddressEntity createAddress(AddressDto addressDto) {
+        if (isAddressExistByPostalCode(addressDto.postalCode())) {
+            return addressRepository.findAddressByPostalCode(addressDto.postalCode());
         }
-        return addressRepository.save(new AddressEntity(addressDto));
+        var newAddress = new AddressEntity(addressDto);
+        newAddress.setPostalCode(addressDto.postalCode().replace("-", ""));
+        return addressRepository.save(newAddress);
     }
 
     public AddressDto findAddressByPostalCode(String postalCode) {
@@ -57,7 +54,7 @@ public class AddressService {
         return addressRepository.existsAddressByPostalCode(postalCode);
     }
 
-    public AddressDto searchAddressByPostalCode(String postalCode) throws Exception {
+    public AddressViaCepDto searchAddressByPostalCode(String postalCode) throws Exception {
         if (postalCode.contains("-"))
             postalCode = postalCode.replace("-", "");
 
@@ -74,6 +71,6 @@ public class AddressService {
         if (response.statusCode() != 200)
             throw new AddressNotFound("Nenhum endereço encontrado");
 
-        return new ObjectMapper().readValue(response.body(), AddressDto.class);
+        return new ObjectMapper().readValue(response.body(), AddressViaCepDto.class);
     }
 }

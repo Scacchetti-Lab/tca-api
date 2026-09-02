@@ -1,6 +1,7 @@
 package com.api.tca.domain.address.entity;
 
 import com.api.tca.domain.address.dto.AddressDto;
+import com.api.tca.domain.address.dto.AddressViaCepDto;
 import com.api.tca.domain.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,7 +38,10 @@ public class AddressEntity {
     private String uf;
     private String neighborhood;
 
-    public AddressEntity(AddressDto dto) {
+    @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
+    private Set<UserEntity> userList;
+
+    public AddressEntity(AddressViaCepDto dto) {
         this.postalCode = dto.cep();
         this.number = dto.numero();
         this.complement = dto.complemento();
@@ -47,6 +51,13 @@ public class AddressEntity {
         this.neighborhood = dto.bairro();
     }
 
-    @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
-    private Set<UserEntity> userList;
+    public AddressEntity(AddressDto dto) {
+        this.postalCode = dto.postalCode();
+        this.number = dto.number();
+        this.complement = dto.complement();
+        this.name = dto.name();
+        this.uf = dto.uf();
+        this.state = dto.state();
+        this.neighborhood = dto.neighborhood();
+    }
 }
