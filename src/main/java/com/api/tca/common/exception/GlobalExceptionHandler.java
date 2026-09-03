@@ -2,6 +2,7 @@ package com.api.tca.common.exception;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.address.exception.AddressNotFound;
+import com.api.tca.domain.user.exception.ProfileNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,6 +20,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AddressNotFound.class)
     public ResponseEntity<ApiResponse<?>> handleAddressNotFound(AddressNotFound ex) {
+        var serverResponse = ApiResponse.Invalid("404", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
+    }
+
+    @ExceptionHandler(ProfileNotFound.class)
+    public ResponseEntity<ApiResponse<?>> handleProfileNotFound(AddressNotFound ex) {
         var serverResponse = ApiResponse.Invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }

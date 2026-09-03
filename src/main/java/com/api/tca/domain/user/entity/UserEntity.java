@@ -1,15 +1,20 @@
 package com.api.tca.domain.user.entity;
 
 import com.api.tca.domain.address.entity.AddressEntity;
+import com.api.tca.domain.user.dto.RegisterRequestDto;
 import com.api.tca.domain.user.enums.ScoreType;
 import com.api.tca.domain.user.enums.UserStatus;
+import com.api.tca.domain.user.service.UserService;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -56,8 +61,15 @@ public class UserEntity {
     @Column(name = "score_type")
     private ScoreType scoreType;
 
-    @Column(name = "ai_token_used")
-    private int aiTokenUser;
+    @ManyToMany
+    @JoinTable(
+            name = "user_profiles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "profile_id")
+    )
+    private Set<ProfileEntity> profiles = new HashSet<>();
+
+    private int aiTokenUsed;
 
     @Enumerated(EnumType.STRING)
     private UserStatus status;
@@ -69,4 +81,28 @@ public class UserEntity {
     private LocalDateTime modifiedOn;
 
     private UUID createdBy;
+
+
+    public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address) {
+        this.fullName = dto.fullName();
+        this.username = UserService.createUserName(dto.fullName());
+        this.address = address;
+        this.aiTokenUsed = 0;
+        this.cpf = dto.cpf().replace("-", "").replace(".", "");
+        this.profilePhoto = dto.profilePhoto();
+        this.email = dto.email();
+        this.mobilePhone = dto.mobilePhone();
+        this.score = 0;
+        this.scoreType = UserService.discoverScoreType(dto.profileType());
+        this.password = UserService.encryptPassword(dto.password());
+        this.birthDate = dto.birthDate();
+        this.profiles.add(profile);
+        this.status = UserStatus.WAITING_VERIFY;
+        this.createdOn = LocalDateTime.now();
+        this.modifiedOn = LocalDateTime.now();
+    }
+
+    public void addProfile(ProfileEntity profile) {
+        this.profiles.add(profile);
+    }
 }

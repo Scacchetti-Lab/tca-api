@@ -1,6 +1,8 @@
 package com.api.tca.domain.user.controller;
 
+import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.user.dto.AuthenticateDto;
+import com.api.tca.domain.user.dto.RegisterResponseDto;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

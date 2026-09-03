@@ -23,7 +23,7 @@ public class AddressController {
         if (cep.isEmpty())
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         var address = addressService.findAddressByPostalCode(cep);
-        return ResponseEntity.ok(address);
+        return ResponseEntity.ok(new AddressDto(address));
     }
 
     @GetMapping("/{id}")

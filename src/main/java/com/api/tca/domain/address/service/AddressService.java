@@ -32,13 +32,13 @@ public class AddressService {
         return addressRepository.save(newAddress);
     }
 
-    public AddressDto findAddressByPostalCode(String postalCode) {
+    public AddressEntity findAddressByPostalCode(String postalCode) {
         var entity = addressRepository.findAddressByPostalCode(postalCode);
         if (entity == null) {
             throw new AddressNotFound("Endereço não existe no sistema.");
         }
 
-        return new AddressDto(entity);
+        return entity;
     }
 
     public AddressDto findAddressById(UUID id) {
