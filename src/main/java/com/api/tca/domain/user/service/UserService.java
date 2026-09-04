@@ -1,17 +1,19 @@
 package com.api.tca.domain.user.service;
 
-import com.api.tca.common.model.ApiResponse;
+import com.api.tca.common.security.PasswordGenerator;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
 import com.api.tca.domain.user.dto.user.ChangePasswordDto;
+import com.api.tca.domain.user.dto.user.ForgotPasswordDto;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.dto.user.RegisterResponseDto;
 import com.api.tca.domain.user.entity.UserEntity;
+import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
+import com.api.tca.domain.user.exception.UserNotFound;
 import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,8 @@ import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static java.lang.Math.abs;
 
 
 @Service
@@ -32,6 +36,9 @@ public class UserService {
 
     @Autowired
     private AddressService addressService;
+
+    @Autowired
+    private PasswordGenerator passwordGenerator;
 
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
@@ -57,6 +64,30 @@ public class UserService {
         UserEntity user = userRepository.findById(id).orElseThrow();
         user.setPassword(newPasswordEncrypted);
         user.setModifiedOn(LocalDateTime.now());
+    }
+
+    @Transactional
+    public boolean changePassword(ForgotPasswordDto request) {
+        if (request.account().isEmpty()) {
+            return false;
+        }
+
+        UserEntity user;
+        user = userRepository.findUserByEmail(request.account());
+        if (user == null) {
+            user = userRepository.findUserByUsername(request.account());
+
+            if (user == null) throw new UserNotFound("Usuário não encontrado");
+        }
+
+        var newGeneratedPassword = passwordGenerator.generate();
+        user.setModifiedOn(LocalDateTime.now());
+        user.setStatus(UserStatus.FORCE_CHANGE_PASSWORD);
+        user.setPassword(encryptPassword(newGeneratedPassword));
+
+        System.out.println("\n\nSENHA GERADA: " + newGeneratedPassword + "\n\n");
+        // TODO: Disparar email para o usuário que redefiniu a senha informando qual foi o resultado.
+        return true;
     }
 
     public static String encryptPassword(String rawPassword) {

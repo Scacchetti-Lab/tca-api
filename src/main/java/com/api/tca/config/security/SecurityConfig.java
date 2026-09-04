@@ -1,5 +1,6 @@
 package com.api.tca.config.security;
 
+import com.api.tca.common.security.PasswordGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,6 +25,11 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public PasswordGenerator encoder() {
+        return new PasswordGenerator();
     }
 }

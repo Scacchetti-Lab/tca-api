@@ -20,10 +20,6 @@ public class ApiResponse<T> {
         return new ApiResponse<>(statusCode, message, null, false);
     }
 
-    public static ApiResponse<?> valid(String statusCode, String message) {
-        return new ApiResponse<>(statusCode, message, null, true);
-    }
-
     public ApiResponse<T> ValidGet(T content) {
         return new ApiResponse<>("200", "Ação concluída", content, true);
     }

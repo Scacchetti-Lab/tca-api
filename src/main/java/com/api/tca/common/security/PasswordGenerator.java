@@ -1,4 +1,4 @@
-package com.api.tca.config.security;
+package com.api.tca.common.security;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -42,18 +42,15 @@ public final class PasswordGenerator {
 
         List<Character> passwordChars = new ArrayList<>(length);
 
-        // Garante pelo menos um caractere de cada categoria
         for (String category : CHAR_CATEGORIES) {
             passwordChars.add(randomCharFrom(category));
         }
 
-        // Preenche o restante com categorias aleatórias
         for (int i = CHAR_CATEGORIES.length; i < length; i++) {
             String category = CHAR_CATEGORIES[secureRandom.nextInt(CHAR_CATEGORIES.length)];
             passwordChars.add(randomCharFrom(category));
         }
 
-        // Embaralha para não deixar os primeiros caracteres em ordem fixa de categoria
         Collections.shuffle(passwordChars, secureRandom);
 
         StringBuilder password = new StringBuilder(length);

@@ -4,6 +4,7 @@ import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.address.exception.AddressNotFound;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.exception.ProfileNotFound;
+import com.api.tca.domain.user.exception.UserNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,13 +37,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiResponse<?>> handleNoSuchElementsException(NoSuchElementException ex) {
         var serverResponse = ApiResponse.invalid("404", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
+    }
+
+    @ExceptionHandler(UserNotFound.class)
+    public ResponseEntity<ApiResponse<?>> handleNotFound(UserNotFound ex) {
+        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
     }
 
     @ExceptionHandler(PasswordsAreEquals.class)
     public ResponseEntity<ApiResponse<?>> handlePasswordAreEquals(PasswordsAreEquals ex) {
         var serverResponse = ApiResponse.invalid("400", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
