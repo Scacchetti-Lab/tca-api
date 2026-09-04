@@ -1,4 +1,4 @@
-package com.api.tca.domain.user.dto;
+package com.api.tca.domain.user.dto.profile;
 
 import com.api.tca.domain.user.entity.ProfileEntity;
 

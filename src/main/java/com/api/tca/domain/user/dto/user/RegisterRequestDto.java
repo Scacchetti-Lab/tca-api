@@ -1,4 +1,4 @@
-package com.api.tca.domain.user.dto;
+package com.api.tca.domain.user.dto.user;
 
 import com.api.tca.domain.address.dto.AddressDto;
 import com.api.tca.domain.user.enums.ProfileTypes;

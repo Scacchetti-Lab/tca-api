@@ -36,3 +36,5 @@ public class ApiResponse<T> {
         return new ApiResponse<>(statusCode, message, content, true);
     }
 }
+
+;

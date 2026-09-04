@@ -1,15 +1,13 @@
 package com.api.tca.domain.user.entity;
 
 import com.api.tca.domain.address.entity.AddressEntity;
-import com.api.tca.domain.user.dto.RegisterRequestDto;
-import com.api.tca.domain.user.enums.ScoreType;
+import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.service.UserService;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -88,7 +86,7 @@ public class UserEntity {
         this.password = UserService.encryptPassword(dto.password());
         this.birthDate = dto.birthDate();
         this.profiles.add(profile);
-        this.status = UserStatus.WAITING_VERIFY;
+        this.status = UserStatus.FIRST_LOGIN;
         this.createdOn = LocalDateTime.now();
         this.modifiedOn = LocalDateTime.now();
     }

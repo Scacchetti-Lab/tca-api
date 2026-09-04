@@ -100,7 +100,8 @@ public class UserSecurity implements UserDetails {
     public boolean isEnabled() {
         return this.userEntity.isDeleted()
                 || this.userEntity.getStatus() == UserStatus.ACTIVE
-                || this.userEntity.getStatus() == UserStatus.WAITING_VERIFY
+                || this.userEntity.getStatus() == UserStatus.FIRST_LOGIN
+                || this.userEntity.getStatus() == UserStatus.CHECKING_MFA
                 || this.userEntity.getStatus() == UserStatus.FORCE_CHANGE_PASSWORD;
     }
 }

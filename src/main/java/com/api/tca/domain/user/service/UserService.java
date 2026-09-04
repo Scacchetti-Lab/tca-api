@@ -1,18 +1,23 @@
 package com.api.tca.domain.user.service;
 
+import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.user.dto.RegisterRequestDto;
-import com.api.tca.domain.user.dto.RegisterResponseDto;
+import com.api.tca.domain.user.dto.user.ChangePasswordDto;
+import com.api.tca.domain.user.dto.user.RegisterRequestDto;
+import com.api.tca.domain.user.dto.user.RegisterResponseDto;
 import com.api.tca.domain.user.entity.UserEntity;
-import com.api.tca.domain.user.enums.ProfileTypes;
+import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -30,7 +35,6 @@ public class UserService {
 
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
-
         AddressEntity userAddress;
         String formattedCep = request.address().postalCode().replace("-", "");
         if (addressService.isAddressExistByPostalCode(formattedCep))
@@ -42,6 +46,17 @@ public class UserService {
         var newUser = userRepository.save(new UserEntity(request, userProfile, userAddress));
 
         return new RegisterResponseDto(newUser);
+    }
+
+    @Transactional
+    public void changePassword(UUID id, ChangePasswordDto request) {
+        if (request.newPassword().contains(request.oldPassword())) {
+            throw new PasswordsAreEquals("A nova senha não pode conter informações da antiga.");
+        }
+        String newPasswordEncrypted = encryptPassword(request.newPassword());
+        UserEntity user = userRepository.findById(id).orElseThrow();
+        user.setPassword(newPasswordEncrypted);
+        user.setModifiedOn(LocalDateTime.now());
     }
 
     public static String encryptPassword(String rawPassword) {

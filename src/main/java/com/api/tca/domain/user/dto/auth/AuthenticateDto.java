@@ -1,4 +1,4 @@
-package com.api.tca.domain.user.dto;
+package com.api.tca.domain.user.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,6 +1,5 @@
 package com.api.tca.domain.user.service;
 
-import com.api.tca.domain.user.dto.ProfileDto;
 import com.api.tca.domain.user.entity.ProfileEntity;
 import com.api.tca.domain.user.enums.ProfileTypes;
 import com.api.tca.domain.user.exception.ProfileNotFound;
