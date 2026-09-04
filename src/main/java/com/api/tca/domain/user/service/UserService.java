@@ -67,6 +67,16 @@ public class UserService {
     }
 
     @Transactional
+    public void deleteUser(UUID id) {
+        var userToDelete = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFound("Usuário não encontrado"));
+
+        userToDelete.setDeleted(true);
+        userToDelete.setModifiedOn(LocalDateTime.now());
+        userToDelete.setStatus(UserStatus.INACTIVE);
+    }
+
+    @Transactional
     public void changePassword(UUID id, ChangePasswordDto request) {
         if (request.newPassword().contains(request.oldPassword())) {
             throw new PasswordsAreEquals("A nova senha não pode conter informações da antiga.");

@@ -56,4 +56,10 @@ public class UserController {
         var response = userService.updateUser(id, request);
         return ResponseEntity.accepted().body(new SuccessResult<>("Usuário atualizado", response));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
 }
