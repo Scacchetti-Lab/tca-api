@@ -1,8 +1,10 @@
 package com.api.tca.domain.user.controller;
 
 import com.api.tca.common.model.ApiResponse;
+import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.domain.user.dto.user.ChangePasswordDto;
+import com.api.tca.domain.user.dto.user.ForgotPasswordDto;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.dto.user.RegisterResponseDto;
 import com.api.tca.domain.user.service.UserService;
@@ -34,11 +36,21 @@ public class UserController {
 
     /**
      * Modifica a senha do usuário
+     * @param id {@code UUID} Identificador único do usuário
+     * @param request {@Code ChangePasswordDto} DTO para troca de senha
      * */
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> changePassword(@PathVariable UUID id, @RequestBody @Valid ChangePasswordDto request) {
         userService.changePassword(id, request);
 
         return ResponseEntity.ok().body(new SuccessResult<>("200", "Senha modificada com sucesso!"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody @Valid ForgotPasswordDto request) {
+        var success = userService.changePassword(request);
+        if (!success)
+            return ResponseEntity.badRequest().body(new FailureResult<>("400", "Email ou Username devem ser informados"));
+        return ResponseEntity.ok().body(new SuccessResult<>("200", "A sua senha foi redefinida, enviamos um email com novas informações!"));
     }
 }
