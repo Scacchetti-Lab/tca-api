@@ -70,6 +70,9 @@ public class UserEntity {
     private LocalDateTime createdOn;
     private LocalDateTime modifiedOn;
 
+    private Boolean useMfa;
+    private String mfaToken;
+
     private UUID createdBy;
 
 
@@ -86,6 +89,7 @@ public class UserEntity {
         this.password = UserService.encryptPassword(dto.password());
         this.birthDate = dto.birthDate();
         this.profiles.add(profile);
+        this.useMfa = false;
         this.status = UserStatus.FIRST_LOGIN;
         this.createdOn = LocalDateTime.now();
         this.modifiedOn = LocalDateTime.now();

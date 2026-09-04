@@ -3,14 +3,12 @@ package com.api.tca.domain.user.service;
 import com.api.tca.common.security.PasswordGenerator;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.user.dto.user.ChangePasswordDto;
-import com.api.tca.domain.user.dto.user.ForgotPasswordDto;
-import com.api.tca.domain.user.dto.user.RegisterRequestDto;
-import com.api.tca.domain.user.dto.user.RegisterResponseDto;
+import com.api.tca.domain.user.dto.user.*;
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.exception.UserNotFound;
+import com.api.tca.domain.user.mapper.UserMapper;
 import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +38,9 @@ public class UserService {
     @Autowired
     private PasswordGenerator passwordGenerator;
 
+    @Autowired
+    private UserMapper mapper;
+
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
         AddressEntity userAddress;
@@ -53,6 +54,16 @@ public class UserService {
         var newUser = userRepository.save(new UserEntity(request, userProfile, userAddress));
 
         return new RegisterResponseDto(newUser);
+    }
+
+    @Transactional
+    public UserResponseDto updateUser(UUID id, UpdateUserDto request) {
+        var userDb = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFound("Usuário não encontrado"));
+        mapper.mapUpdateDtoToUserEntity(request, userDb);
+        userDb.setModifiedOn(LocalDateTime.now());
+
+        return new UserResponseDto(userDb);
     }
 
     @Transactional
