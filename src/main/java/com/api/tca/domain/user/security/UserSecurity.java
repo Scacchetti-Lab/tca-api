@@ -28,7 +28,7 @@ public class UserSecurity implements UserDetails {
         return List.of(
                 new SimpleGrantedAuthority("ROLE_SALESPERSON"),
                 new SimpleGrantedAuthority("ROLE_MANAGER"),
-                new SimpleGrantedAuthority("ROLE_ADMIN")
+                new SimpleGrantedAuthority("ROLE_DIRECTOR")
         );
     }
 

@@ -21,7 +21,6 @@ public class ProfileEntity {
     private UUID id;
 
     private String name;
-    private BigDecimal avgSalary;
     private boolean isAdmin;
 
     @ManyToMany(mappedBy = "profiles", fetch = FetchType.LAZY)

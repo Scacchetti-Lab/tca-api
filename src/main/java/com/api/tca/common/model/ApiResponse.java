@@ -16,11 +16,11 @@ public class ApiResponse<T> {
     private boolean isValid;
 
 
-    public static ApiResponse<?> Invalid(String statusCode, String message) {
+    public static ApiResponse<?> invalid(String statusCode, String message) {
         return new ApiResponse<>(statusCode, message, null, false);
     }
 
-    public static ApiResponse<?> Valid(String statusCode, String message) {
+    public static ApiResponse<?> valid(String statusCode, String message) {
         return new ApiResponse<>(statusCode, message, null, true);
     }
 
@@ -32,7 +32,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>("201", "Ação concluída", content, true);
     }
 
-    public ApiResponse<T> Valid(String statusCode, String message, T content) {
+    public ApiResponse<T> valid(String statusCode, String message, T content) {
         return new ApiResponse<>(statusCode, message, content, true);
     }
 }

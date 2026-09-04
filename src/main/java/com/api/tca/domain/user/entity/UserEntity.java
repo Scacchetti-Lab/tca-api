@@ -30,7 +30,6 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "fullname")
     private String fullName;
 
     @Column(name = "username")
@@ -40,26 +39,19 @@ public class UserEntity {
     @Column(columnDefinition = "CHAR(11)")
     private String cpf;
 
-    @Column(name = "mobilephone")
     private String mobilePhone;
 
-    @Column(name = "birthdate")
     private LocalDate birthDate;
     private String email;
     private String password;
 
-    @Column(name = "profilephoto")
-    private String profilePhoto;
+    private String profilePhotoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private AddressEntity address;
 
     private int score;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "score_type")
-    private ScoreType scoreType;
 
     @ManyToMany
     @JoinTable(
@@ -89,11 +81,10 @@ public class UserEntity {
         this.address = address;
         this.aiTokenUsed = 0;
         this.cpf = dto.cpf().replace("-", "").replace(".", "");
-        this.profilePhoto = dto.profilePhoto();
+        this.profilePhotoUrl = dto.profilePhoto();
         this.email = dto.email();
         this.mobilePhone = dto.mobilePhone();
         this.score = 0;
-        this.scoreType = UserService.discoverScoreType(dto.profileType());
         this.password = UserService.encryptPassword(dto.password());
         this.birthDate = dto.birthDate();
         this.profiles.add(profile);

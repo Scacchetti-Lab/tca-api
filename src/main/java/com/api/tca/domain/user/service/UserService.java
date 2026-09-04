@@ -6,14 +6,15 @@ import com.api.tca.domain.user.dto.RegisterRequestDto;
 import com.api.tca.domain.user.dto.RegisterResponseDto;
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.enums.ProfileTypes;
-import com.api.tca.domain.user.enums.ScoreType;
 import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
+import java.text.Normalizer;
+import java.util.concurrent.ThreadLocalRandom;
+
 
 @Service
 public class UserService {
@@ -48,19 +49,25 @@ public class UserService {
     }
 
     public static String createUserName(String fullName) {
-        Random rdn = new Random();
-        var randomId = "#" + rdn.nextInt(99999) + 10000;
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("O nome não pode ser vazio.");
+        }
 
-        var sliced = fullName.toLowerCase().split(" ");
-        if (sliced.length > 0)
-            return sliced[0] + "." + sliced[sliced.length-1] + randomId;
-        return fullName + randomId;
-    }
+        String normalized = Normalizer.normalize(fullName, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^a-zA-Z\\s]", "")
+                .trim()
+                .toLowerCase();
 
-    public static ScoreType discoverScoreType(ProfileTypes profile) {
-        return switch (profile) {
-            case SALESPERSON -> ScoreType.PERFORMANCE;
-            case DIRECTOR, MANAGER -> ScoreType.STRATEGIC;
-        };
+        String[] names = normalized.split("\\s+");
+        int random = ThreadLocalRandom.current().nextInt(10000);
+
+        if (names.length <= 1)
+            return String.format("%s#%04d", names[0], random);
+
+        String firstName = names[0];
+        String lastName = names[names.length - 1];
+
+        return String.format("%s.%s#%04d", firstName, lastName, random);
     }
 }

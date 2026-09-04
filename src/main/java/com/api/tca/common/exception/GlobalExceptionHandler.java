@@ -20,13 +20,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AddressNotFound.class)
     public ResponseEntity<ApiResponse<?>> handleAddressNotFound(AddressNotFound ex) {
-        var serverResponse = ApiResponse.Invalid("404", ex.getMessage());
+        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }
 
     @ExceptionHandler(ProfileNotFound.class)
     public ResponseEntity<ApiResponse<?>> handleProfileNotFound(AddressNotFound ex) {
-        var serverResponse = ApiResponse.Invalid("404", ex.getMessage());
+        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }
 
@@ -39,25 +39,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public  ResponseEntity<ApiResponse<?>> handleBadCredentials() {
-        var serverResponse = ApiResponse.Invalid("401", "Credenciais Inválidas");
+        var serverResponse = ApiResponse.invalid("401", "Credenciais Inválidas");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(serverResponse);
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<?>> handleAuthentication() {
-        var serverResponse = ApiResponse.Invalid("401", "Falha ao se autenticar");
+        var serverResponse = ApiResponse.invalid("401", "Falha ao se autenticar");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(serverResponse);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public  ResponseEntity<ApiResponse<?>> handleAccessDenied() {
-        var serverResponse = ApiResponse.Invalid("403", "Acesso Negado");
+        var serverResponse = ApiResponse.invalid("403", "Acesso Negado");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(serverResponse);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleInternalServerError(Exception e) {
-        var serverResponse = ApiResponse.Invalid("500", e.getMessage());
+        var serverResponse = ApiResponse.invalid("500", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(serverResponse);
     }
 
