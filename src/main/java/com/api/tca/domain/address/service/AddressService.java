@@ -22,6 +22,9 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
+    @Autowired
+    private HttpClient httpClient;
+
     @Transactional
     public AddressEntity createAddress(AddressDto addressDto) {
         if (isAddressExistByPostalCode(addressDto.postalCode())) {
@@ -58,7 +61,6 @@ public class AddressService {
         if (postalCode.contains("-"))
             postalCode = postalCode.replace("-", "");
 
-        HttpClient client = HttpClient.newHttpClient();
         String viaCepUrl = "https://viacep.com.br/ws/[cep]/json/";
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(viaCepUrl.replace("[cep]", postalCode)))
@@ -66,7 +68,7 @@ public class AddressService {
                 .GET()
                 .build();
 
-        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200)
             throw new AddressNotFound("Nenhum endereço encontrado");

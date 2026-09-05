@@ -2,6 +2,8 @@ package com.api.tca.common.exception;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.address.exception.AddressNotFound;
+import com.api.tca.domain.email.exception.EmailFailed;
+import com.api.tca.domain.email.exception.TemplateNotFound;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.exception.ProfileNotFound;
 import com.api.tca.domain.user.exception.UserNotFound;
@@ -29,10 +31,17 @@ public class GlobalExceptionHandler {
             ProfileNotFound.class,
             NoSuchElementException.class,
             UserNotFound.class,
-            UserPrincipalNotFoundException.class})
-    public ResponseEntity<ApiResponse<?>> handleNotFound(AddressNotFound ex) {
+            UserPrincipalNotFoundException.class,
+            TemplateNotFound.class})
+    public ResponseEntity<ApiResponse<?>> handleNotFound(RuntimeException ex) {
         var serverResponse = ApiResponse.invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
+    }
+
+    @ExceptionHandler(EmailFailed.class)
+    public ResponseEntity<ApiResponse<?>> handleEmailFailed(EmailFailed ex) {
+        var serverResponse = ApiResponse.invalid("424", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(serverResponse);
     }
 
     @ExceptionHandler(PasswordsAreEquals.class)

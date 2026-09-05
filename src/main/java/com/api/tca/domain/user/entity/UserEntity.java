@@ -1,5 +1,6 @@
 package com.api.tca.domain.user.entity;
 
+import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
@@ -91,8 +92,8 @@ public class UserEntity {
         this.profiles.add(profile);
         this.useMfa = false;
         this.status = UserStatus.FIRST_LOGIN;
-        this.createdOn = LocalDateTime.now();
-        this.modifiedOn = LocalDateTime.now();
+        this.createdOn = BrazilRealTime.now();
+        this.modifiedOn = BrazilRealTime.now();
     }
 
     public void addProfile(ProfileEntity profile) {
