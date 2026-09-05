@@ -43,6 +43,10 @@ public class UserController {
         return ResponseEntity.ok().body(new SuccessResult<>("200", "Senha modificada com sucesso!"));
     }
 
+    /**
+     * Enviando um email ou username, altera a senha do usuário por uma aleatória
+     * @param request {@code ForgotPasswordDto} atributo account sendo email ou username
+     * */
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody @Valid ForgotPasswordDto request) {
         var success = userService.changePassword(request);
@@ -61,5 +65,11 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserDetails(@PathVariable UUID id) {
+        var userDto = new UserResponseDto(userService.getUserById(id));
+        return ResponseEntity.ok().body(new SuccessResult<>("Usuário encontrado", userDto));
     }
 }

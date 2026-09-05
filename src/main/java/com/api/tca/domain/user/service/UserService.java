@@ -41,6 +41,14 @@ public class UserService {
     @Autowired
     private UserMapper mapper;
 
+    public UserEntity getUserById(UUID id) {
+        var userEntity = userRepository.findUserByIdAndIsDeletedFalse(id);
+        if (userEntity == null)
+            throw new UserNotFound("Usuário não encontrado");
+
+        return userEntity;
+    }
+
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
         AddressEntity userAddress;
@@ -58,8 +66,7 @@ public class UserService {
 
     @Transactional
     public UserResponseDto updateUser(UUID id, UpdateUserDto request) {
-        var userDb = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFound("Usuário não encontrado"));
+        var userDb = getUserById(id);
         mapper.mapUpdateDtoToUserEntity(request, userDb);
         userDb.setModifiedOn(LocalDateTime.now());
 
@@ -68,8 +75,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(UUID id) {
-        var userToDelete = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFound("Usuário não encontrado"));
+        var userToDelete = getUserById(id);
 
         userToDelete.setDeleted(true);
         userToDelete.setModifiedOn(LocalDateTime.now());
@@ -94,9 +100,9 @@ public class UserService {
         }
 
         UserEntity user;
-        user = userRepository.findUserByEmail(request.account());
+        user = userRepository.findUserByEmailAndIsDeletedFalse(request.account());
         if (user == null) {
-            user = userRepository.findUserByUsername(request.account());
+            user = userRepository.findUserByUsernameAndIsDeletedFalse(request.account());
 
             if (user == null) throw new UserNotFound("Usuário não encontrado");
         }
