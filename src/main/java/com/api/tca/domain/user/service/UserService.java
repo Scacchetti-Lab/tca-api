@@ -3,6 +3,8 @@ package com.api.tca.domain.user.service;
 import com.api.tca.common.security.PasswordGenerator;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
+import com.api.tca.domain.user.dto.auth.AuthResponseDto;
+import com.api.tca.domain.user.dto.auth.AuthenticateDto;
 import com.api.tca.domain.user.dto.user.*;
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.enums.UserStatus;
@@ -10,8 +12,15 @@ import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.exception.UserNotFound;
 import com.api.tca.domain.user.mapper.UserMapper;
 import com.api.tca.domain.user.repository.UserRepository;
+import com.api.tca.domain.user.security.UserSecurity;
 import jakarta.transaction.Transactional;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +33,7 @@ import static java.lang.Math.abs;
 
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
@@ -39,7 +48,32 @@ public class UserService {
     private PasswordGenerator passwordGenerator;
 
     @Autowired
+    private TokenService tokenService;
+
+    @Autowired
     private UserMapper mapper;
+
+    public AuthResponseDto authenticate(AuthenticationManager manager, AuthenticateDto data) {
+        var token = new UsernamePasswordAuthenticationToken(data.email(), data.password());
+        var authentication = manager.authenticate(token);
+        var authUserPrincipal = (UserSecurity) authentication.getPrincipal();
+
+        if (authUserPrincipal == null)
+            throw new UserNotFound("Usuário principal de email não encontrado");
+
+        var authUser = authUserPrincipal.getUserEntity();
+        var authToken = tokenService.generateToken(authUserPrincipal.getUserEntity());
+        return new AuthResponseDto(authUser.getEmail(), authUser.getFirstProfileName(), authToken);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(@NonNull String username) {
+        var user = userRepository.findUserByEmailAndIsDeletedFalse(username);
+        if (user == null)
+            throw new UsernameNotFoundException("Usuário não encontrado");
+
+        return new UserSecurity(user);
+    }
 
     public UserEntity getUserById(UUID id) {
         var userEntity = userRepository.findUserByIdAndIsDeletedFalse(id);

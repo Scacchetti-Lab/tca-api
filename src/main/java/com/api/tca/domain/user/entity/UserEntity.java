@@ -98,4 +98,8 @@ public class UserEntity {
     public void addProfile(ProfileEntity profile) {
         this.profiles.add(profile);
     }
+
+    public String getFirstProfileName() {
+        return this.profiles.stream().findFirst().get().getName();
+    }
 }

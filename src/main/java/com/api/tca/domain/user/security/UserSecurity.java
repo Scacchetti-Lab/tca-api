@@ -1,8 +1,11 @@
 package com.api.tca.domain.user.security;
 
+import com.api.tca.domain.user.entity.ProfileEntity;
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.enums.UserStatus;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
 public class UserSecurity implements UserDetails {
 
     private final UserEntity userEntity;
@@ -25,11 +29,10 @@ public class UserSecurity implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(
-                new SimpleGrantedAuthority("ROLE_SALESPERSON"),
-                new SimpleGrantedAuthority("ROLE_MANAGER"),
-                new SimpleGrantedAuthority("ROLE_DIRECTOR")
-        );
+        return userEntity.getProfiles().stream()
+                .filter(ProfileEntity::isAdmin)
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase().replace(" ", "_")))
+                .toList();
     }
 
     /**
@@ -63,7 +66,7 @@ public class UserSecurity implements UserDetails {
      */
     @Override
     public boolean isAccountNonExpired() {
-        return this.userEntity.getStatus() == UserStatus.INACTIVE;
+        return this.userEntity.getStatus() != UserStatus.INACTIVE;
     }
 
     /**
@@ -74,7 +77,7 @@ public class UserSecurity implements UserDetails {
      */
     @Override
     public boolean isAccountNonLocked() {
-        return this.userEntity.getStatus() == UserStatus.BANNED;
+        return this.userEntity.getStatus() != UserStatus.BANNED && this.userEntity.getStatus() != UserStatus.INACTIVE;
     }
 
     /**
@@ -86,8 +89,7 @@ public class UserSecurity implements UserDetails {
      */
     @Override
     public boolean isCredentialsNonExpired() {
-        // criar lógica para status WAITING_VERIFY
-        return false;
+        return true;
     }
 
     /**
@@ -98,8 +100,8 @@ public class UserSecurity implements UserDetails {
      */
     @Override
     public boolean isEnabled() {
-        return this.userEntity.isDeleted()
-                || this.userEntity.getStatus() == UserStatus.ACTIVE
+        return !this.userEntity.isDeleted()
+                && this.userEntity.getStatus() == UserStatus.ACTIVE
                 || this.userEntity.getStatus() == UserStatus.FIRST_LOGIN
                 || this.userEntity.getStatus() == UserStatus.CHECKING_MFA
                 || this.userEntity.getStatus() == UserStatus.FORCE_CHANGE_PASSWORD;

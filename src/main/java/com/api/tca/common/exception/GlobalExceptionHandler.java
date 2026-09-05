@@ -10,38 +10,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AddressNotFound.class)
-    public ResponseEntity<ApiResponse<?>> handleAddressNotFound(AddressNotFound ex) {
-        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
-    }
-
-    @ExceptionHandler(ProfileNotFound.class)
-    public ResponseEntity<ApiResponse<?>> handleProfileNotFound(AddressNotFound ex) {
-        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ApiResponse<?>> handleNoSuchElementsException(NoSuchElementException ex) {
-        var serverResponse = ApiResponse.invalid("404", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
-    }
-
-    @ExceptionHandler(UserNotFound.class)
-    public ResponseEntity<ApiResponse<?>> handleNotFound(UserNotFound ex) {
+    @ExceptionHandler({AddressNotFound.class,
+            UsernameNotFoundException.class,
+            ProfileNotFound.class,
+            NoSuchElementException.class,
+            UserNotFound.class,
+            UserPrincipalNotFoundException.class})
+    public ResponseEntity<ApiResponse<?>> handleNotFound(AddressNotFound ex) {
         var serverResponse = ApiResponse.invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);
     }
