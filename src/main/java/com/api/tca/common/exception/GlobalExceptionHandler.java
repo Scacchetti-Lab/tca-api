@@ -26,13 +26,7 @@ import java.util.NoSuchElementException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({AddressNotFound.class,
-            UsernameNotFoundException.class,
-            ProfileNotFound.class,
-            NoSuchElementException.class,
-            UserNotFound.class,
-            UserPrincipalNotFoundException.class,
-            TemplateNotFound.class})
+    @ExceptionHandler({RuntimeException.class, NoSuchElementException.class})
     public ResponseEntity<ApiResponse<?>> handleNotFound(RuntimeException ex) {
         var serverResponse = ApiResponse.invalid("404", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(serverResponse);

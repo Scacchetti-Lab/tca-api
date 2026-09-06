@@ -75,4 +75,11 @@ public class AddressService {
 
         return new ObjectMapper().readValue(response.body(), AddressViaCepDto.class);
     }
+
+    public AddressEntity findOrCreateAddressByPostalCode(AddressDto address) {
+        String formattedCep = address.postalCode().replace("-", "");
+        return isAddressExistByPostalCode(formattedCep)
+                ? findAddressByPostalCode(formattedCep)
+                : createAddress(address);
+    }
 }

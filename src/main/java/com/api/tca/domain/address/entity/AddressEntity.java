@@ -2,6 +2,7 @@ package com.api.tca.domain.address.entity;
 
 import com.api.tca.domain.address.dto.AddressDto;
 import com.api.tca.domain.address.dto.AddressViaCepDto;
+import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.user.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,6 +41,9 @@ public class AddressEntity {
 
     @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
     private Set<UserEntity> userList;
+
+    @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
+    private Set<ClientEntity> clientList;
 
     public AddressEntity(AddressViaCepDto dto) {
         this.postalCode = dto.cep();

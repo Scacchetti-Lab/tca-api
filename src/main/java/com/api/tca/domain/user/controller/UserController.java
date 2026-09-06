@@ -51,7 +51,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> forgotPassword(@RequestBody @Valid ForgotPasswordDto request) {
         var success = userService.changePassword(request);
         if (!success)
-            return ResponseEntity.badRequest().body(new FailureResult<>("400", "Email ou Username devem ser informados"));
+            return ResponseEntity.badRequest().body(new FailureResult<>("Email ou Username devem ser informados"));
         return ResponseEntity.ok().body(new SuccessResult<>("200", "A sua senha foi redefinida, enviamos um email com novas informações!"));
     }
 

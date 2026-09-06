@@ -90,12 +90,7 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
-        AddressEntity userAddress;
-        String formattedCep = request.address().postalCode().replace("-", "");
-        if (addressService.isAddressExistByPostalCode(formattedCep))
-            userAddress = addressService.findAddressByPostalCode(formattedCep);
-        else
-            userAddress = addressService.createAddress(request.address());
+        AddressEntity userAddress = addressService.findOrCreateAddressByPostalCode(request.address());
 
         var userProfile = profileService.getProfileByKey(request.profileType());
         var newUser = userRepository.save(new UserEntity(request, userProfile, userAddress));
