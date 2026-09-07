@@ -1,5 +1,7 @@
 package com.api.tca.domain.client.service;
 
+import com.api.tca.common.ai.dto.request.ClientEmbeddingRequest;
+import com.api.tca.common.ai.provider.ClientAnalyseProvider;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
 import com.api.tca.domain.client.dto.analyse.ClientAnalyseDto;
@@ -19,13 +21,17 @@ import com.api.tca.domain.squad.entity.SquadEntity;
 import com.api.tca.domain.squad.service.SquadService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
 @Service
 public class ClientService {
@@ -44,6 +50,9 @@ public class ClientService {
 
     @Autowired
     private ClientMapper mapper;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     public ClientEntity getClientById(UUID id) {
         return clientRepository.findByIdAndIsDeletedFalse(id).orElseThrow(() -> new ClientNotFoundException("Cliente não encontrado"));
@@ -79,7 +88,8 @@ public class ClientService {
         clientEntity.setStatus(ClientStatus.UNDEFINED);
         clientEntity.setRevenue(request.revenue() == null ? new BigDecimal("0") : request.revenue());
 
-        clientRepository.save(clientEntity);
+        var newClient = clientRepository.save(clientEntity);
+        eventPublisher.publishEvent(new ClientEmbeddingRequest(newClient.getId()));
         return new ClientDetailedDto(clientEntity);
     }
 
@@ -96,6 +106,7 @@ public class ClientService {
             throw new InvalidClientStatusException("Status de cliente inválido para definição");
         }
 
+        eventPublisher.publishEvent(new ClientEmbeddingRequest(updatedClient.getId()));
         return new ClientDetailedDto(updatedClient);
     }
 
