@@ -1,4 +1,4 @@
-package com.api.tca.domain.client.dto;
+package com.api.tca.domain.client.dto.client;
 
 import com.api.tca.domain.address.dto.AddressDto;
 import com.api.tca.domain.squad.dto.RegisterSquadDto;

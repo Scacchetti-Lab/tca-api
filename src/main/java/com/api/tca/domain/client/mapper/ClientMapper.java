@@ -1,7 +1,7 @@
 package com.api.tca.domain.client.mapper;
 
-import com.api.tca.domain.client.dto.RegisterClientRequestDto;
-import com.api.tca.domain.client.dto.UpdateClientDto;
+import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
+import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

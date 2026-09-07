@@ -2,8 +2,12 @@ package com.api.tca.domain.client.service;
 
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.client.dto.*;
-import com.api.tca.domain.client.entity.ClientAnalyseEntity;
+import com.api.tca.domain.client.dto.analyse.ClientAnalyseDto;
+import com.api.tca.domain.client.dto.analyse.ClientCompleteDto;
+import com.api.tca.domain.client.dto.client.ClientDetailedDto;
+import com.api.tca.domain.client.dto.client.ClientSimplerDto;
+import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
+import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
 import com.api.tca.domain.client.exception.ClientNotFoundException;

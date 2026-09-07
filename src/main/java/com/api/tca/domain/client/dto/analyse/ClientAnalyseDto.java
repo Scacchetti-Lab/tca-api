@@ -1,4 +1,4 @@
-package com.api.tca.domain.client.dto;
+package com.api.tca.domain.client.dto.analyse;
 
 import com.api.tca.domain.client.entity.ClientAnalyseEntity;
 import com.api.tca.domain.client.enums.FinancialImpact;

@@ -2,8 +2,14 @@ package com.api.tca.domain.client.controller;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
-import com.api.tca.domain.client.dto.*;
-import com.api.tca.domain.client.entity.ClientEntity;
+import com.api.tca.domain.client.dto.analyse.ClientAnalyseDto;
+import com.api.tca.domain.client.dto.analyse.ClientCompleteDto;
+import com.api.tca.domain.client.dto.analyse.ClientRecommendationDto;
+import com.api.tca.domain.client.dto.client.ClientDetailedDto;
+import com.api.tca.domain.client.dto.client.ClientSimplerDto;
+import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
+import com.api.tca.domain.client.dto.client.UpdateClientDto;
+import com.api.tca.domain.client.service.ClientAnalyseService;
 import com.api.tca.domain.client.service.ClientService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +30,9 @@ public class ClientController {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private ClientAnalyseService analyseService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ClientSimplerDto>>> getPaginatesClients(@PageableDefault(size = 10, sort = {"fantasyName"}) Pageable pageable) {
@@ -67,13 +76,16 @@ public class ClientController {
     }
 
     @GetMapping("/{id}/analyse")
-    public void analyseClientByStatus(@PathVariable UUID id) {
-        throw new RuntimeException("Not yet implemented");
+    public ResponseEntity<ApiResponse<ClientRecommendationDto>> analyseClientByStatus(@PathVariable UUID id) {
+        var recommendation = analyseService.getRecommendationByClientId(id);
+
+        ApiResponse<ClientRecommendationDto> result = new SuccessResult<>("Analise de cliente definida", recommendation);
+        return ResponseEntity.ok(result);
     }
 
+    // FIRST TODO: Popular e desenvolver CRUD de reuniões
     @PostMapping("/{id}/predict")
     public void predictClientBaseOnLastMeetings(@PathVariable UUID id) {
         throw new RuntimeException("Not yet implemented");
     }
-
 }
