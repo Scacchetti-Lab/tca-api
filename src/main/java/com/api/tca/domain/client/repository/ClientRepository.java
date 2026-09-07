@@ -11,7 +11,8 @@ import java.util.UUID;
 public interface ClientRepository extends JpaRepository<ClientEntity, UUID> {
     Optional<ClientEntity> findClientByCnpj(String cnpj);
     Boolean existsClientByCnpj(String cnpj);
-    Optional<ClientEntity> findClientByEmail(String email);
+    Optional<ClientEntity> findClientByEmailAndIsDeletedFalse(String email);
+    Optional<ClientEntity> findClientByNameAndIsDeletedFalse(String email);
     Optional<ClientEntity> findByIdAndIsDeletedFalse(UUID id);
 
     Page<ClientEntity> findAllClientsByIsDeletedFalse(Pageable pageable);

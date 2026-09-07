@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import java.net.http.HttpClient;
 
 public class FailureResult<T> extends ApiResponse<T> {
-    public FailureResult(HttpClient status, String message, T content) {
+    public FailureResult(HttpStatus status, String message, T content) {
         super(String.valueOf(status), message, content, false);
     }
 

@@ -2,6 +2,7 @@ package com.api.tca.domain.client.entity;
 
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
+import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.squad.entity.SquadEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -50,4 +52,7 @@ public class ClientEntity {
 
     @OneToOne(mappedBy = "client")
     private ClientAnalyseEntity analyse;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private Set<MeetingEntity> meetings;
 }

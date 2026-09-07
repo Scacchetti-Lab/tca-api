@@ -23,21 +23,21 @@ public class ClientAnalyseEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "client_id")
     private ClientEntity client;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
-    private double performance;
+    private Integer performance;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
-    private double closingProbability;
+    private Integer closingProbability;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
-    private double flexibility;
+    private Integer flexibility;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
-    private double risk;
+    private Integer risk;
 
     private BigDecimal financialImpact;
 

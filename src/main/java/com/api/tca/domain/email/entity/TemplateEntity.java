@@ -21,7 +21,10 @@ public class TemplateEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(columnDefinition = "TEXT")
     private String subject;
+
+    @Column(columnDefinition = "TEXT")
     private String body;
     private LocalDateTime createdOn;
     private LocalDateTime updatedOn;
