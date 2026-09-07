@@ -2,10 +2,7 @@ package com.api.tca.domain.client.controller;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
-import com.api.tca.domain.client.dto.ClientDetailedDto;
-import com.api.tca.domain.client.dto.ClientSimplerDto;
-import com.api.tca.domain.client.dto.RegisterClientRequestDto;
-import com.api.tca.domain.client.dto.UpdateClientDto;
+import com.api.tca.domain.client.dto.*;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import jakarta.validation.Valid;
@@ -58,15 +55,25 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ClientDetailedDto>> getClientDetails(@PathVariable UUID id) {
-        ClientEntity detailedClient = clientService.getClientById(id);
-        ApiResponse<ClientDetailedDto> result = new SuccessResult<>("Cliente encontrado", new ClientDetailedDto(detailedClient));
+    public ResponseEntity<ApiResponse<ClientCompleteDto>> getClientDetails(@PathVariable UUID id,
+                                                                           @RequestParam(value = "complete", defaultValue = "false") Boolean isCompleted)
+    {
+        ClientCompleteDto clientComplete = isCompleted
+            ? clientService.getCompleteClientById(id)
+            : new ClientCompleteDto(new ClientDetailedDto(clientService.getClientById(id)), null);
 
+        ApiResponse<ClientCompleteDto> result = new SuccessResult<>("Cliente encontrado", clientComplete);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}/analyse")
-    public void analyseClientWithAi(@PathVariable UUID id) {
+    public void analyseClientByStatus(@PathVariable UUID id) {
         throw new RuntimeException("Not yet implemented");
     }
+
+    @PostMapping("/{id}/predict")
+    public void predictClientBaseOnLastMeetings(@PathVariable UUID id) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
 }

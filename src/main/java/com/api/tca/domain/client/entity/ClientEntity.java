@@ -29,6 +29,7 @@ public class ClientEntity {
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(columnDefinition = "CHAR(14)")
     private String cnpj;
+
     private String email;
     private String phone;
 
@@ -46,4 +47,7 @@ public class ClientEntity {
     private ClientStatus status;
 
     private boolean isDeleted;
+
+    @OneToOne(mappedBy = "client")
+    private ClientAnalyseEntity analyse;
 }

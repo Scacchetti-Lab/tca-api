@@ -2,10 +2,8 @@ package com.api.tca.domain.client.service;
 
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.client.dto.ClientDetailedDto;
-import com.api.tca.domain.client.dto.ClientSimplerDto;
-import com.api.tca.domain.client.dto.RegisterClientRequestDto;
-import com.api.tca.domain.client.dto.UpdateClientDto;
+import com.api.tca.domain.client.dto.*;
+import com.api.tca.domain.client.entity.ClientAnalyseEntity;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
 import com.api.tca.domain.client.exception.ClientNotFoundException;
@@ -32,6 +30,9 @@ public class ClientService {
     private ClientRepository clientRepository;
 
     @Autowired
+    private ClientAnalyseService clientAnalyseService;
+
+    @Autowired
     private SquadService squadService;
 
     @Autowired
@@ -42,6 +43,15 @@ public class ClientService {
 
     public ClientEntity getClientById(UUID id) {
         return clientRepository.findByIdAndIsDeletedFalse(id).orElseThrow(() -> new ClientNotFoundException("Cliente não encontrado"));
+    }
+
+    public ClientCompleteDto getCompleteClientById(UUID id) {
+        ClientDetailedDto client = new ClientDetailedDto(getClientById(id));
+        var analyseEntity = clientAnalyseService.getAnalyseByClientId(id);
+        if (analyseEntity == null) return new ClientCompleteDto(client, null);
+
+        ClientAnalyseDto analyse = new ClientAnalyseDto(analyseEntity);
+        return new ClientCompleteDto(client, analyse);
     }
 
     public Page<ClientSimplerDto> getClients(Pageable pageable) {
@@ -58,7 +68,6 @@ public class ClientService {
         SquadEntity squadSelected = squadService.findSquadByCode(request.squad().code());
 
         ClientEntity clientEntity = mapper.mapRegisterClientRequestDtoToClientEntity(request);
-        System.out.println(request);
 
         clientEntity.setCnpj(cleanCnpj(request.cnpj()));
         clientEntity.setAddress(clientAddress);
