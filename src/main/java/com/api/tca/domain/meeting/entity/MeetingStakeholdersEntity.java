@@ -1,5 +1,7 @@
 package com.api.tca.domain.meeting.entity;
 
+import com.api.tca.common.helpers.BrazilRealTime;
+import com.api.tca.domain.meeting.dto.request.StakeholderRegisterDto;
 import com.api.tca.domain.meeting.enums.MeetingStakeholderSide;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -32,4 +34,12 @@ public class MeetingStakeholdersEntity {
     private MeetingStakeholderSide side;
 
     private LocalDateTime createdAt;
+
+    public MeetingStakeholdersEntity(MeetingEntity meeting, StakeholderRegisterDto dto) {
+        this.name = dto.name();
+        this.meeting = meeting;
+        this.side = dto.stakeholderSide();
+        this.role = dto.stakeholderRole();
+        this.createdAt = BrazilRealTime.now();
+    }
 }

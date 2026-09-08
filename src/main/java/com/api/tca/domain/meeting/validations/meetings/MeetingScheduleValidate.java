@@ -1,4 +1,4 @@
-package com.api.tca.domain.meeting.validations;
+package com.api.tca.domain.meeting.validations.meetings;
 
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.meeting.entity.MeetingEntity;

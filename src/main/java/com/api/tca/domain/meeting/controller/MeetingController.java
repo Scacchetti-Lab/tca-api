@@ -1,25 +1,28 @@
 package com.api.tca.domain.meeting.controller;
 
 import com.api.tca.common.model.ApiResponse;
-import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
+import com.api.tca.domain.meeting.dto.request.StakeholderRegisterDto;
 import com.api.tca.domain.meeting.dto.request.MinimalRegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.RegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.UpdateMeetingDto;
 import com.api.tca.domain.meeting.dto.response.MeetingBasicDataDto;
 import com.api.tca.domain.meeting.dto.response.MeetingDetailedDto;
+import com.api.tca.domain.meeting.dto.response.StakeholderResponseDto;
 import com.api.tca.domain.meeting.service.MeetingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -43,10 +46,10 @@ public class MeetingController {
         return ResponseEntity.ok(new SuccessResult<>("Reunião encontrada", data));
     }
 
-    @PostMapping
     /**
      * Cria uma nova futura reunião com data de agendamento especificada
      * */
+    @PostMapping
     public ResponseEntity<ApiResponse<MeetingBasicDataDto>> addRawMeeting(@RequestBody @Valid RegisterMeetingDto request, UriComponentsBuilder uriBuilder) {
         var data = meetingService.createMeeting(request);
         URI meetingUri = uriBuilder.path("/meeting/{id}").buildAndExpand(data.id()).toUri();
@@ -106,13 +109,17 @@ public class MeetingController {
         return ResponseEntity.ok(new SuccessResult<>("Reunião encontrada", data));
     }
 
-    @PostMapping("/user")
-    public ResponseEntity addEmployeeToTheMeeting() {
-        throw new RuntimeException("Not Implemented");
+    @PostMapping("/{id}/stakeholder")
+    public ResponseEntity<ApiResponse<Set<StakeholderResponseDto>>> addParticipantToTheMeeting(@PathVariable UUID id,
+                                                                                                @RequestBody @Valid Set<StakeholderRegisterDto> requestParticipants) {
+        var data = meetingService.addStakeholdersToTheMeeting(id, requestParticipants);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Stakeholder adicionado", data));
     }
 
-    @DeleteMapping("/user")
-    public ResponseEntity deleteEmployeeFromTheMeeting() {
-        throw new RuntimeException("Not Implemented");
+    @DeleteMapping("/{id}/stakeholder")
+    public ResponseEntity<ApiResponse<StakeholderResponseDto>> deleteParticipantFromTheMeeting(@PathVariable UUID id,
+                                                                                               @RequestBody @Valid StakeholderRegisterDto requestParticipants) {
+        var removedStakeholder = meetingService.deleteStakeholderFromTheMeeting(id, requestParticipants);
+        return ResponseEntity.ok(new SuccessResult<>("Participante removido", removedStakeholder));
     }
 }

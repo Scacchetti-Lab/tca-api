@@ -6,20 +6,26 @@ import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import com.api.tca.domain.meeting.dto.request.MinimalRegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.RegisterMeetingDto;
+import com.api.tca.domain.meeting.dto.request.StakeholderRegisterDto;
 import com.api.tca.domain.meeting.dto.request.UpdateMeetingDto;
 import com.api.tca.domain.meeting.dto.response.MeetingBasicDataDto;
 import com.api.tca.domain.meeting.dto.response.MeetingDetailedDto;
 import com.api.tca.domain.meeting.dto.response.MeetingStakeHolder;
+import com.api.tca.domain.meeting.dto.response.StakeholderResponseDto;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
-import com.api.tca.domain.meeting.exception.MeetingAlreadyExistsException;
-import com.api.tca.domain.meeting.exception.MeetingNotFoundException;
-import com.api.tca.domain.meeting.exception.MeetingValidateException;
+import com.api.tca.domain.meeting.enums.MeetingUserSource;
+import com.api.tca.domain.meeting.exception.*;
 import com.api.tca.domain.meeting.mapper.MeetingMapper;
 import com.api.tca.domain.meeting.repository.MeetingRepository;
 import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
-import com.api.tca.domain.meeting.validations.MeetingValidate;
+import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
+import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
 import com.api.tca.domain.transcript.service.TranscriptService;
+import com.api.tca.domain.user.entity.UserEntity;
+import com.api.tca.domain.user.exception.UserNotFound;
+import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -53,7 +59,13 @@ public class MeetingService {
     private ClientService clientService;
 
     @Autowired
-    private List<MeetingValidate> validator;
+    private UserRepository userRepository;
+
+    @Autowired
+    private List<StakeholderValidate> shValidator;
+
+    @Autowired
+    private List<MeetingValidate> mtValidator;
 
     public Page<MeetingBasicDataDto> getAllMeetings(Pageable pageable) {
         var data = meetingRepository.findAll(pageable).map(MeetingBasicDataDto::new);
@@ -112,13 +124,16 @@ public class MeetingService {
 
         var entity = new MeetingEntity(request);
         entity.setClient(findMeetingClientByEmailOrName(request));
-        //validator.forEach(v -> v.validate(entity));
+        mtValidator.forEach(v -> v.validate(entity));
 
         var result = meetingRepository.save(entity);
         listenerService.onMeetingCreated(new MeetingEmbeddingRequest(entity.getId()));
         return new MeetingBasicDataDto(result);
     }
 
+    // TODO - Integrar Leitura de arquivos de transcrição
+    // TODO - Analise de Transcrição de forma assíncrona
+    // TODO - Criar Chunks e Embeds
     @Transactional
     public MeetingDetailedDto createMeeting(MinimalRegisterMeetingDto request) {
         var entity = new MeetingEntity(request);
@@ -143,9 +158,63 @@ public class MeetingService {
         return new MeetingBasicDataDto(updatedEntity);
     }
 
+    // TODO - Analise de Transcrição de forma assíncrona
+    // TODO - Criar Chunks e Embeds
     @Transactional
     public MeetingDetailedDto analyseMeetingById(UUID id) {
         throw new RuntimeException("Not implemented yet");
+    }
+
+    @Transactional
+    public Set<StakeholderResponseDto> addStakeholdersToTheMeeting(UUID id, Set<StakeholderRegisterDto> request) {
+        MeetingEntity meeting = getMeetingEntityById(id);
+        var systemFilteredStakeholders = request.stream()
+                .filter(s -> s.source() == MeetingUserSource.SYSTEM).toList();
+        var guestFilteredStakeholders = request.stream()
+                .filter(s -> s.source() == MeetingUserSource.GUEST).toList();
+
+        if (!guestFilteredStakeholders.isEmpty()) {
+            request.forEach(r -> {
+                shValidator.forEach(v -> v.validate(new MeetingStakeholdersEntity(meeting, r)));
+            });
+            var guests = guestFilteredStakeholders.stream().map(s -> new MeetingStakeholdersEntity(meeting, s)).toList();
+            stakeholderRepository.saveAll(guests);
+        }
+
+        if (!systemFilteredStakeholders.isEmpty()) {
+            Set<UserEntity> users = new java.util.HashSet<>(Set.of());
+            for (StakeholderRegisterDto stakeholder : systemFilteredStakeholders) {
+                var user = userRepository.findByIsDeletedFalseAndUsernameOrIsDeletedFalseAndEmail(stakeholder.userName(), stakeholder.email())
+                        .orElse(null);
+                if (user == null || meetingRepository.existsStakeholderByUserId(user.getId())) continue;
+                users.add(user);
+            }
+            if (users.isEmpty()) throw new StakeholderListAlreadyAddedException("Stakeholders já adicionados a essa reunião");
+            meeting.addMultiplesEmployee(users);
+        }
+
+        return request.stream().map(StakeholderResponseDto::new).collect(Collectors.toSet());
+    }
+
+    @Transactional
+    public StakeholderResponseDto deleteStakeholderFromTheMeeting(UUID id, StakeholderRegisterDto request) {
+        MeetingEntity meeting = getMeetingEntityById(id);
+        if (meeting.getStatus() != MeetingStatus.SCHEDULED) {
+            throw new MeetingValidateException("Somente em reuniões agendadas é possível remover ou adicionar stakeholders");
+        }
+
+        if (request.source() == MeetingUserSource.SYSTEM) {
+            String login = request.email() != null ? request.email() : request.userName();
+            UserEntity user = userRepository.findByLogin(login).orElseThrow(
+                    () -> new UserNotFound("Usuário com login " + login + " não foi encontrado."));
+
+            meeting.removeEmployee(user);
+            return new StakeholderResponseDto(user.getFullName(), request.source());
+        }
+        var stakeHolderDb = stakeholderRepository.findFirstByNameAndMeetingId(request.name(), meeting.getId())
+                .orElseThrow(() -> new StakeholderNotFoundException("Stakeholder não foi encontrado nessa reunião."));
+        stakeholderRepository.delete(stakeHolderDb);
+        return new StakeholderResponseDto(request.name(), request.source());
     }
 
     private Set<MeetingStakeHolder> findStakeholdersByMeetingId(UUID id) {

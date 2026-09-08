@@ -2,9 +2,13 @@ package com.api.tca.common.exception;
 
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.model.ApiResponse;
+import com.api.tca.common.model.FailureResult;
 import com.api.tca.domain.address.exception.AddressNotFound;
 import com.api.tca.domain.email.exception.EmailFailed;
 import com.api.tca.domain.email.exception.TemplateNotFound;
+import com.api.tca.domain.meeting.exception.MeetingAlreadyExistsException;
+import com.api.tca.domain.meeting.exception.MeetingValidateException;
+import com.api.tca.domain.meeting.exception.StakeholderListAlreadyAddedException;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
 import com.api.tca.domain.user.exception.ProfileNotFound;
 import com.api.tca.domain.user.exception.UserNotFound;
@@ -33,6 +37,15 @@ public class GlobalExceptionHandler {
                 ex.getStatusCode().toString(), ex.getMessage(), ex.getResponseBodyAs(ResponseModelDto.class), false
         );
         return ResponseEntity.status(ex.getStatusCode()).body(serverResponse);
+    }
+
+    @ExceptionHandler({
+            StakeholderListAlreadyAddedException.class,
+            MeetingValidateException.class,
+            MeetingAlreadyExistsException.class})
+    public ResponseEntity<ApiResponse<?>> handleMeetingBadRequests(RuntimeException ex) {
+        var serverResponse = new FailureResult<>(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }
 
     @ExceptionHandler({RuntimeException.class, NoSuchElementException.class})

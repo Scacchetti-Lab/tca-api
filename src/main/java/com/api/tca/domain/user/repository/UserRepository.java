@@ -13,6 +13,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     UserEntity findUserByEmailAndIsDeletedFalse(String email);
     UserEntity findUserByUsernameAndIsDeletedFalse(String username);
 
+    @Query("SELECT u FROM UserEntity u WHERE (u.username = :login OR u.email = :login) AND u.isDeleted = false")
+    Optional<UserEntity> findByLogin(@Param("login") String login);
+
+    Optional<UserEntity> findByIsDeletedFalseAndUsernameOrIsDeletedFalseAndEmail(String username, String email);
+
     UserEntity findUserByIdAndIsDeletedFalse(UUID id);
 
 }

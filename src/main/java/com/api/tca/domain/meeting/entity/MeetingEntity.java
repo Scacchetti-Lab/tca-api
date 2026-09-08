@@ -98,4 +98,14 @@ public class MeetingEntity {
         this.durationMin = 0;
         this.status = MeetingStatus.COMPLETED;
     }
+
+    public void removeEmployee(UserEntity user) {
+        this.users.remove(user);
+        user.getMeetings().remove(this);
+    }
+
+    public void addMultiplesEmployee(Set<UserEntity> users) {
+        this.users.addAll(users);
+        users.forEach(u -> u.getMeetings().add(this));
+    }
 }

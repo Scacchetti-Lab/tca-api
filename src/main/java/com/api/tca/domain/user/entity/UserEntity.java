@@ -2,6 +2,7 @@ package com.api.tca.domain.user.entity;
 
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.address.entity.AddressEntity;
+import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.service.UserService;
@@ -75,6 +76,9 @@ public class UserEntity {
     private String mfaToken;
 
     private UUID createdBy;
+
+    @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
+    private Set<MeetingEntity> meetings;
 
 
     public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address) {

@@ -28,4 +28,7 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
     Page<MeetingEntity> findAllByClientId(Pageable pageable, UUID clientId);
 
     Boolean existsMeetingsByTotvsId(String totvsId);
+
+    @Query("SELECT COUNT(m) > 0 FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId AND u.isDeleted = false")
+    Boolean existsStakeholderByUserId(@Param("userId") UUID userId);
 }
