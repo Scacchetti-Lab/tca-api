@@ -26,4 +26,6 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
     Optional<MeetingEntity> findFirstLastByUserId(@Param("userId") UUID userId);
 
     Page<MeetingEntity> findAllByClientId(Pageable pageable, UUID clientId);
+
+    Boolean existsMeetingsByTotvsId(String totvsId);
 }

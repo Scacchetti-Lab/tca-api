@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public record MeetingDetailedDto(
         UUID id,
-        Integer totvsId,
+        String totvsId,
         String title,
         String summary,
 

@@ -20,9 +20,6 @@ public class ClientListenerService {
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void onClientCreated(ClientEmbeddingRequest event) {
-        System.out.println("ENTREI NO EVENT LISTENER");
-        var response = provider.addClientEmbeds(event.clientId());
-        System.out.println("OPERACAO FINALIZADA");
-        System.out.println("\n\n" + response + "\n\n");
+        provider.addClientEmbeds(event.clientId());
     }
 }

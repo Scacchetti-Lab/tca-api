@@ -1,5 +1,6 @@
 package com.api.tca.common.exception;
 
+import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.domain.address.exception.AddressNotFound;
 import com.api.tca.domain.email.exception.EmailFailed;
@@ -25,6 +26,14 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(HttpClientErrorException.class)
+    public ResponseEntity<ApiResponse<ResponseModelDto<?>>> handleHttpClientErrorException(HttpClientErrorException ex) {
+        var serverResponse = new ApiResponse<ResponseModelDto<?>>(
+                ex.getStatusCode().toString(), ex.getMessage(), ex.getResponseBodyAs(ResponseModelDto.class), false
+        );
+        return ResponseEntity.status(ex.getStatusCode()).body(serverResponse);
+    }
 
     @ExceptionHandler({RuntimeException.class, NoSuchElementException.class})
     public ResponseEntity<ApiResponse<?>> handleNotFound(RuntimeException ex) {

@@ -1,5 +1,6 @@
 package com.api.tca.domain.meeting.service;
 
+import com.api.tca.common.ai.dto.request.MeetingEmbeddingRequest;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
@@ -11,6 +12,7 @@ import com.api.tca.domain.meeting.dto.response.MeetingDetailedDto;
 import com.api.tca.domain.meeting.dto.response.MeetingStakeHolder;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
+import com.api.tca.domain.meeting.exception.MeetingAlreadyExistsException;
 import com.api.tca.domain.meeting.exception.MeetingNotFoundException;
 import com.api.tca.domain.meeting.exception.MeetingValidateException;
 import com.api.tca.domain.meeting.mapper.MeetingMapper;
@@ -43,6 +45,9 @@ public class MeetingService {
 
     @Autowired
     private TranscriptService transcriptService;
+
+    @Autowired
+    private MeetingListenerService listenerService;
 
     @Autowired
     private ClientService clientService;
@@ -102,12 +107,15 @@ public class MeetingService {
 
     @Transactional
     public MeetingBasicDataDto createMeeting(RegisterMeetingDto request) {
+        if (meetingRepository.existsMeetingsByTotvsId(request.totvsId()))
+            throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
+
         var entity = new MeetingEntity(request);
         entity.setClient(findMeetingClientByEmailOrName(request));
-        validator.forEach(v -> v.validate(entity));
+        //validator.forEach(v -> v.validate(entity));
 
         var result = meetingRepository.save(entity);
-        // chamada de embedd
+        listenerService.onMeetingCreated(new MeetingEmbeddingRequest(entity.getId()));
         return new MeetingBasicDataDto(result);
     }
 
@@ -120,10 +128,9 @@ public class MeetingService {
 
         var result = meetingRepository.save(entity);
         var stakeHolders = findStakeholdersByMeetingId(result.getId());
+        listenerService.onMeetingCreated(new MeetingEmbeddingRequest(entity.getId()));
 
-        // chamada de embedd
         // chamada de transcricao
-
         return new MeetingDetailedDto(result, stakeHolders);
     }
 
@@ -132,6 +139,7 @@ public class MeetingService {
         var entity = meetingRepository.findById(id).orElseThrow(() -> new MeetingNotFoundException("Reunião não encontrada"));
         var updatedEntity = mapper.mapUpdateMeetingDtoToMeetingEntity(request, entity);
 
+        listenerService.onMeetingCreated(new MeetingEmbeddingRequest(entity.getId()));
         return new MeetingBasicDataDto(updatedEntity);
     }
 

@@ -39,7 +39,7 @@ public class MeetingEntity {
     )
     private Set<UserEntity> users;
 
-    private Integer totvsId;
+    private String totvsId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transcript_id")
@@ -77,7 +77,7 @@ public class MeetingEntity {
 
     public MeetingEntity(RegisterMeetingDto dto) {
         this.title = dto.title();
-        this.totvsId = Integer.valueOf(dto.totvsId());
+        this.totvsId = dto.totvsId();
         this.summary = dto.summary();
         this.scheduled = BrazilRealTime.cast(dto.scheduled());
         this.clientRepresent = dto.clientRepresent();
@@ -90,7 +90,7 @@ public class MeetingEntity {
 
     public MeetingEntity(MinimalRegisterMeetingDto dto) {
         this.title = "Reunião TOTVS";
-        this.totvsId = Integer.valueOf(dto.totvsId());
+        this.totvsId = dto.totvsId();
         this.scheduled = BrazilRealTime.cast(dto.scheduledAt());
         this.clientRepresent = dto.clientRepresent();
         this.isDeleted = false;
