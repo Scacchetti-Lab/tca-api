@@ -1,4 +1,9 @@
 package com.api.tca.common.ai.dto.response.transcript.performance;
 
-public record PerformanceAnalyseDto() {
-}
+import com.api.tca.common.ai.dto.response.transcript.basic.InsightsDto;
+
+public record PerformanceAnalyseDto(
+        PerformanceMetricsDto metrics,
+        InsightsDto insights,
+        String feedback
+) {}
