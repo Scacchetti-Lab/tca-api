@@ -2,7 +2,7 @@ package com.api.tca.domain.meeting.validations.stakeholder;
 
 import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
-import com.api.tca.domain.meeting.exception.MeetingValidateException;
+import com.api.tca.domain.meeting.exception.rules.MeetingValidateException;
 import com.api.tca.domain.meeting.repository.MeetingRepository;
 import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
 import org.springframework.beans.factory.annotation.Autowired;

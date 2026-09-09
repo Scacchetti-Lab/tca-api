@@ -2,6 +2,7 @@ package com.api.tca.domain.client.entity;
 
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
+import com.api.tca.domain.meeting.entity.MeetingAnalyseStrategicEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.squad.entity.SquadEntity;
 import jakarta.persistence.*;
@@ -50,9 +51,14 @@ public class ClientEntity {
 
     private boolean isDeleted;
 
+    private String segment;
+
     @OneToOne(mappedBy = "client")
     private ClientAnalyseEntity analyse;
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private Set<MeetingEntity> meetings;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private Set<MeetingAnalyseStrategicEntity> strategicAnalyses;
 }

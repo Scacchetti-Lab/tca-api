@@ -1,5 +1,6 @@
 package com.api.tca.domain.meeting.dto.request;
 
+import com.api.tca.common.ai.dto.response.transcript.basic.StakeholderDto;
 import com.api.tca.domain.meeting.enums.MeetingStakeholderSide;
 import com.api.tca.domain.meeting.enums.MeetingUserSource;
 import jakarta.persistence.EnumType;
@@ -23,4 +24,11 @@ public record StakeholderRegisterDto(
         @Enumerated(EnumType.STRING)
         MeetingUserSource source
 ) {
+        public StakeholderRegisterDto(String name, String role, MeetingStakeholderSide side) {
+                this(name, null, null, side, role, MeetingUserSource.GUEST);
+        }
+
+        public StakeholderRegisterDto(StakeholderDto dto) {
+                this(dto.name(), dto.role(), dto.side());
+        }
 }

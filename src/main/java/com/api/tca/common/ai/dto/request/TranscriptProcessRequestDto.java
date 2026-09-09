@@ -5,11 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.validation.Valid;
 
 import java.util.UUID;
 
-public record TranscriptProcessRequest(
+public record TranscriptProcessRequestDto(
         @JsonProperty("transcript_id")
         UUID transcriptId,
 

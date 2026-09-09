@@ -3,7 +3,7 @@ package com.api.tca.domain.meeting.validations.meetings;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
-import com.api.tca.domain.meeting.exception.MeetingValidateException;
+import com.api.tca.domain.meeting.exception.rules.MeetingValidateException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

@@ -1,8 +1,8 @@
 package com.api.tca.domain.meeting.dto.score;
 
 import com.api.tca.domain.client.enums.ClientStatus;
+import com.api.tca.domain.client.enums.FinancialImpact;
 import com.api.tca.domain.meeting.entity.MeetingAnalyseStrategicEntity;
-import com.api.tca.domain.meeting.enums.MeetingFinancialImpact;
 
 import java.math.BigDecimal;
 
@@ -14,7 +14,8 @@ public record StrategicAnalyseDto(
         Double risk,
         Double financialImpactGrade,
         BigDecimal financialImpact,
-        MeetingFinancialImpact financialImpactStatus,
+        FinancialImpact financialImpactStatus,
+        String tips,
         String feedback
 ) {
     public StrategicAnalyseDto(MeetingAnalyseStrategicEntity analyse) {
@@ -27,6 +28,7 @@ public record StrategicAnalyseDto(
                 analyse.getFinancialImpactGrade(),
                 analyse.getFinancialImpact(),
                 analyse.getFinancialImpactStatus(),
+                analyse.getTips(),
                 analyse.getFeedback()
         );
     }

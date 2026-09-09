@@ -1,8 +1,7 @@
 package com.api.tca.common.ai.provider;
 
-import com.api.tca.common.ai.dto.request.ClientEmbeddingRequest;
+import com.api.tca.common.ai.dto.request.ClientEmbeddingDto;
 import com.api.tca.common.ai.dto.response.AiDefaultResponseDto;
-import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -16,13 +15,13 @@ public class ClientAnalyseProvider {
     @Autowired
     private RestClient restClient;
 
-    public AiDefaultResponseDto<String> addClientEmbeds(UUID clientId) {
-        return restClient.post()
+    public void addClientEmbeds(UUID clientId) {
+        restClient.post()
                 .uri("/v1/embed/client")
-                .body(new ClientEmbeddingRequest(clientId))
+                .body(new ClientEmbeddingDto(clientId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(new ParameterizedTypeReference<AiDefaultResponseDto<String>>() {});
+                .body(String.class);
     }
 }

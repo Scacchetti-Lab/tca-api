@@ -12,4 +12,8 @@ public class FailureResult<T> extends ApiResponse<T> {
     public FailureResult(String message) {
         super(String.valueOf(HttpStatus.BAD_REQUEST), message, null, false);
     }
+
+    public static <T> FailureResult<T> badRequest(String message) {
+        return new FailureResult<T>(HttpStatus.BAD_REQUEST, message, null);
+    }
 }

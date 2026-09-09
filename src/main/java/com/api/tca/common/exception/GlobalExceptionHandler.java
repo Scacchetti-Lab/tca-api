@@ -3,28 +3,25 @@ package com.api.tca.common.exception;
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.FailureResult;
-import com.api.tca.domain.address.exception.AddressNotFound;
 import com.api.tca.domain.email.exception.EmailFailed;
-import com.api.tca.domain.email.exception.TemplateNotFound;
-import com.api.tca.domain.meeting.exception.MeetingAlreadyExistsException;
-import com.api.tca.domain.meeting.exception.MeetingValidateException;
-import com.api.tca.domain.meeting.exception.StakeholderListAlreadyAddedException;
+import com.api.tca.domain.meeting.exception.analyses.FailedOnEmbeddingException;
+import com.api.tca.domain.meeting.exception.rules.MeetingAlreadyExistsException;
+import com.api.tca.domain.meeting.exception.rules.MeetingValidateException;
+import com.api.tca.domain.meeting.exception.rules.StakeholderListAlreadyAddedException;
+import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
-import com.api.tca.domain.user.exception.ProfileNotFound;
-import com.api.tca.domain.user.exception.UserNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
+import tools.jackson.databind.ObjectMapper;
 
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -34,9 +31,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpClientErrorException.class)
     public ResponseEntity<ApiResponse<ResponseModelDto<?>>> handleHttpClientErrorException(HttpClientErrorException ex) {
         var serverResponse = new ApiResponse<ResponseModelDto<?>>(
-                ex.getStatusCode().toString(), ex.getMessage(), ex.getResponseBodyAs(ResponseModelDto.class), false
+                ex.getStatusCode().toString(),
+                new ObjectMapper().readValue(ex.getMessage(), ResponseModelDto.class).message(),
+                ex.getResponseBodyAs(ResponseModelDto.class), false
         );
         return ResponseEntity.status(ex.getStatusCode()).body(serverResponse);
+    }
+
+    @ExceptionHandler({FailedOnEmbeddingException.class, TranscriptProcessErrorException.class})
+    public ResponseEntity<ApiResponse<?>> handleTranscriptProcessException(RuntimeException ex) {
+        var serverResponse = new FailureResult<>(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(serverResponse);
     }
 
     @ExceptionHandler({

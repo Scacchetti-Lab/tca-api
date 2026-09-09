@@ -1,6 +1,6 @@
 package com.api.tca.domain.client.service;
 
-import com.api.tca.common.ai.dto.request.ClientEmbeddingRequest;
+import com.api.tca.common.ai.dto.request.ClientEmbeddingDto;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
 import com.api.tca.domain.client.dto.analyse.ClientAnalyseDto;
@@ -93,7 +93,7 @@ public class ClientService {
         clientEntity.setRevenue(request.revenue() == null ? new BigDecimal("0") : request.revenue());
 
         var newClient = clientRepository.save(clientEntity);
-        eventPublisher.publishEvent(new ClientEmbeddingRequest(newClient.getId()));
+        eventPublisher.publishEvent(new ClientEmbeddingDto(newClient.getId()));
         return new ClientDetailedDto(clientEntity);
     }
 
@@ -110,7 +110,7 @@ public class ClientService {
             throw new InvalidClientStatusException("Status de cliente inválido para definição");
         }
 
-        eventPublisher.publishEvent(new ClientEmbeddingRequest(updatedClient.getId()));
+        eventPublisher.publishEvent(new ClientEmbeddingDto(updatedClient.getId()));
         return new ClientDetailedDto(updatedClient);
     }
 

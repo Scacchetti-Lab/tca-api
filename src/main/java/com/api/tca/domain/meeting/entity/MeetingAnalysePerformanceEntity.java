@@ -1,10 +1,9 @@
 package com.api.tca.domain.meeting.entity;
 
+import com.api.tca.common.ai.dto.response.transcript.performance.PerformanceAnalyseDto;
+import com.api.tca.common.helpers.BrazilRealTime;
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -37,8 +36,24 @@ public class MeetingAnalysePerformanceEntity {
     @JdbcTypeCode(SqlTypes.NUMERIC)
     private Double missedOpportunities;
     private Integer leadsConverted;
+
+    @Column(columnDefinition = "TEXT")
     private String tips;
+    @Column(columnDefinition = "TEXT")
     private String feedback;
 
     private LocalDateTime createdAt;
+
+    public MeetingAnalysePerformanceEntity(MeetingEntity meeting, PerformanceAnalyseDto analyseDto) {
+        this.meeting = meeting;
+        this.engagement = analyseDto.metrics().engagement();
+        this.communicationQuality = analyseDto.metrics().communicationQuality();
+        this.opportunitiesSeized = analyseDto.metrics().opportunitiesSeized();
+        this.objectionHandling = analyseDto.metrics().objectionHandling();
+        this.missedOpportunities = analyseDto.metrics().missedOpportunities();
+        this.leadsConverted = analyseDto.metrics().leadsConverted();
+        this.tips = analyseDto.insights().tips();
+        this.feedback = analyseDto.feedback();
+        this.createdAt = BrazilRealTime.now();
+    }
 }

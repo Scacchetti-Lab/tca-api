@@ -4,5 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
-public record TranscriptEmbedingRequest(@JsonProperty("transcript_id") UUID meetingId) {
+public record MeetingEmbeddingDto(
+        @JsonProperty("meeting_id")
+        UUID meetingId
+) {
 }

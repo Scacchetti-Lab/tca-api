@@ -4,4 +4,4 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
-public record ClientEmbeddingRequest(@JsonProperty("client_id") UUID clientId) { }
+public record ClientEmbeddingDto(@JsonProperty("client_id") UUID clientId) { }

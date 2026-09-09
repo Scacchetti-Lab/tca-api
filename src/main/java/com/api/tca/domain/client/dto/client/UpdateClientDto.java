@@ -11,6 +11,7 @@ public record UpdateClientDto(
         String fantasyName,
         String email,
         String phone,
+        String segment,
 
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         BigDecimal revenue,
@@ -18,4 +19,16 @@ public record UpdateClientDto(
         RegisterSquadDto squad,
         ClientStatus status
 ) {
+        public UpdateClientDto(String segment) {
+                this(
+                        null,
+                        null,
+                        null,
+                        segment,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+        }
 }

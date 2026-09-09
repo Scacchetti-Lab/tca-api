@@ -32,4 +32,10 @@ public class TranscriptEntity {
 
     @OneToOne(mappedBy = "transcript", fetch = FetchType.EAGER)
     private MeetingEntity meeting;
+
+    public TranscriptEntity(String rawTranscript, TranscriptStatus status) {
+        this.rawTranscript = rawTranscript;
+        this.resume = "EM PROCESSAMENTO...";
+        this.status = status;
+    }
 }

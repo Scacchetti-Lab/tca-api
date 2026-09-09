@@ -1,13 +1,11 @@
 package com.api.tca.domain.client.service;
 
-import com.api.tca.common.ai.dto.request.ClientEmbeddingRequest;
+import com.api.tca.common.ai.dto.request.ClientEmbeddingDto;
 import com.api.tca.common.ai.provider.ClientAnalyseProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-
-import java.util.UUID;
 
 import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
@@ -19,7 +17,7 @@ public class ClientListenerService {
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    public void onClientCreated(ClientEmbeddingRequest event) {
+    public void onClientCreated(ClientEmbeddingDto event) {
         provider.addClientEmbeds(event.clientId());
     }
 }
