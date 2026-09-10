@@ -12,11 +12,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
-    @Query("SELECT m FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId")
-    Page<MeetingEntity> findAllByUserId(Pageable pageable, UUID userId);
+    Page<MeetingEntity> findAllByIsDeletedFalse(Pageable pageable);
+    Optional<MeetingEntity> findByIdAndIsDeletedFalse(UUID id);
+
+    @Query("SELECT m FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId AND m.isDeleted = false")
+    Page<MeetingEntity> findAllByUserIdAndIsDeletedFalse(Pageable pageable, UUID userId);
 
     @Query("SELECT m FROM MeetingEntity m JOIN m.users u " +
-            "WHERE u.id = :userId AND m.scheduled > CURRENT_TIMESTAMP " +
+            "WHERE u.id = :userId AND m.scheduled > CURRENT_TIMESTAMP AND m.isDeleted = false " +
             "ORDER BY m.scheduled ASC")
     Optional<MeetingEntity> findFirstNextByUserId(@Param("userId") UUID userId);
 
@@ -25,10 +28,10 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
             "ORDER BY m.scheduled DESC")
     Optional<MeetingEntity> findFirstLastByUserId(@Param("userId") UUID userId);
 
-    Page<MeetingEntity> findAllByClientId(Pageable pageable, UUID clientId);
-    Set<MeetingEntity> findAllByClientId(UUID clientId);
+    Page<MeetingEntity> findAllByClientIdAndIsDeletedFalse(Pageable pageable, UUID clientId);
+    Set<MeetingEntity> findAllByClientIdAndIsDeletedFalse(UUID clientId);
 
-    Boolean existsMeetingsByTotvsId(String totvsId);
+    Boolean existsMeetingsByTotvsIdAndIsDeletedFalse(String totvsId);
 
     @Query("SELECT COUNT(m) > 0 FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId AND m.id = :meetingId AND u.isDeleted = false")
     boolean isUserInMeeting(@Param("userId") UUID userId, @Param("meetingId") UUID meetingId);

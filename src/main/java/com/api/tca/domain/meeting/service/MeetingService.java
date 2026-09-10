@@ -23,7 +23,6 @@ import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
-import com.api.tca.domain.transcript.entity.TranscriptEntity;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
 import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.transcript.service.TranscriptService;
@@ -82,37 +81,37 @@ public class MeetingService {
     private List<MeetingValidate> mtValidator;
 
     public Page<MeetingBasicDataDto> getAllMeetings(Pageable pageable) {
-        var data = meetingRepository.findAll(pageable).map(MeetingBasicDataDto::new);
+        var data = meetingRepository.findAllByIsDeletedFalse(pageable).map(MeetingBasicDataDto::new);
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
 
     public Page<MeetingBasicDataDto> getAllMeetingByUserId(UUID id, Pageable pageable) {
-        var data = meetingRepository.findAllByUserId(pageable, id).map(MeetingBasicDataDto::new);
+        var data = meetingRepository.findAllByUserIdAndIsDeletedFalse(pageable, id).map(MeetingBasicDataDto::new);
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
 
     public Page<MeetingBasicDataDto> getAllMeetingByClientId(UUID id, Pageable pageable) {
-        var data = meetingRepository.findAllByClientId(pageable, id).map(MeetingBasicDataDto::new);
+        var data = meetingRepository.findAllByClientIdAndIsDeletedFalse(pageable, id).map(MeetingBasicDataDto::new);
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
 
     public Set<MeetingBasicDataDto> getAllMeetingByClientId(UUID id) {
-        var data = meetingRepository.findAllByClientId(id).stream().map(MeetingBasicDataDto::new).collect(Collectors.toSet());
+        var data = meetingRepository.findAllByClientIdAndIsDeletedFalse(id).stream().map(MeetingBasicDataDto::new).collect(Collectors.toSet());
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
 
     public Page<MinimalMeetingDto> getAllMinimalMeetings(Pageable pageable) {
-        var data = meetingRepository.findAll(pageable).map(MinimalMeetingDto::new);
+        var data = meetingRepository.findAllByIsDeletedFalse(pageable).map(MinimalMeetingDto::new);
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
 
     public MeetingEntity getMeetingEntityById(UUID id) {
-        return meetingRepository.findById(id)
+        return meetingRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new MeetingNotFoundException("Reunião não encontrada"));
     }
 
@@ -139,13 +138,16 @@ public class MeetingService {
     public void deleteMeeting(UUID id) {
         var meeting = meetingRepository.findById(id)
                 .orElseThrow(() -> new MeetingNotFoundException("Nenhuma reunião encontrada"));
+        if (meeting.getStatus() == MeetingStatus.IN_PROGRESS)
+            throw new MeetingValidateException("Reuniões em andamento não podem ser excluídas.");
         meeting.setIsDeleted(true);
-        meeting.setStatus(MeetingStatus.CANCELLED);
+        if (meeting.getStatus() == MeetingStatus.SCHEDULED)
+            meeting.setStatus(MeetingStatus.CANCELLED);
     }
 
     @Transactional
     public MeetingBasicDataDto createMeeting(RegisterMeetingDto request) {
-        if (meetingRepository.existsMeetingsByTotvsId(request.totvsId()))
+        if (meetingRepository.existsMeetingsByTotvsIdAndIsDeletedFalse(request.totvsId()))
             throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
 
         var entity = new MeetingEntity(request);
@@ -159,7 +161,7 @@ public class MeetingService {
 
     @Transactional
     public MeetingTranscriptBasicDto createAndAnalyseMeetingByRequest(MinimalRegisterMeetingDto request, ProfileTypes userProfile) {
-        if (meetingRepository.existsMeetingsByTotvsId(request.totvsId()))
+        if (meetingRepository.existsMeetingsByTotvsIdAndIsDeletedFalse(request.totvsId()))
             throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
 
         var entity = new MeetingEntity(request);

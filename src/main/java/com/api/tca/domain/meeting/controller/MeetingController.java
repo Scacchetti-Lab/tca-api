@@ -32,10 +32,8 @@ public class MeetingController {
     @Autowired
     private MeetingService meetingService;
 
-
-    // Rota exclusiva para Gerente e Diretores
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetings(Pageable pageable) {
+    public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetings(@PageableDefault(size = 5) Pageable pageable) {
         var meetings = meetingService.getAllMeetings(pageable);
         return ResponseEntity.ok(new SuccessResult<>( meetings.stream().count() + " reuniões encontradas", meetings));
     }
