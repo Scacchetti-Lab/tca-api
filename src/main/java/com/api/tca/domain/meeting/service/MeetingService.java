@@ -10,6 +10,7 @@ import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
+import com.api.tca.domain.meeting.dto.response.predict.MeetingAiCustomDto;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
@@ -35,6 +36,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -123,15 +125,37 @@ public class MeetingService {
     }
 
     public MeetingDetailedDto getUserMeetingByKey(UUID id, Boolean isNext) {
-        var optionalMeetingEntity = isNext
-                ? meetingRepository.findFirstNextByUserId(id)
-                : meetingRepository.findFirstLastByUserId(id);
+        Pageable limitOne = PageRequest.of(0, 1);
+        var results = isNext
+                ? meetingRepository.findFirstNextByUserId(id, limitOne)
+                : meetingRepository.findFirstLastByUserId(id, limitOne);
 
-        if (optionalMeetingEntity.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
-        var meetingEntity = optionalMeetingEntity.get();
+        var meetingEntity = results.stream().findFirst()
+                .orElseThrow(() -> new MeetingNotFoundException(
+                        "Usuário não possuí uma " + (isNext ? "próxima" : "última") + " reunião"));
         var stakeHolders = findStakeholdersByMeetingId(meetingEntity.getId());
-
         return new MeetingDetailedDto(meetingEntity, stakeHolders);
+    }
+
+    public MeetingDetailedDto getClientMeetingByDirection(UUID id, Boolean isNext) {
+        Pageable limitOne = PageRequest.of(0, 1);
+        var results = isNext
+                ? meetingRepository.findNextClientMeeting(id, limitOne)
+                : meetingRepository.findLastClientMeeting(id, limitOne);
+
+        var searchedMeeting = results.stream().findFirst()
+                .orElseThrow(() -> new MeetingNotFoundException(
+                        "Cliente não possuí uma " + (isNext ? "próxima" : "última") + " reunião"));
+
+        var stakeHolders = findStakeholdersByMeetingId(searchedMeeting.getId());
+        return new MeetingDetailedDto(searchedMeeting, stakeHolders);
+    }
+
+    public MeetingAiCustomDto predictFutureMeeting(UUID id) {
+        MeetingEntity meetingEntity = getMeetingEntityById(id);
+        // TODO: Primeiro busca pela tabela meeting_predicts para checar se já não existe (retorna caso já tenha)
+        // TODO: Novas previsões passam pelo Gemini (provider) e evento assíncrono de processo
+        return null;
     }
 
     @Transactional

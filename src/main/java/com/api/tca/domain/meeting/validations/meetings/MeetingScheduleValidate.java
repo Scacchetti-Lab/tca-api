@@ -23,6 +23,6 @@ public final class MeetingScheduleValidate implements MeetingValidate {
 
         scheduledAt = BrazilRealTime.cast(scheduledAt);
         if (scheduledAt.isBefore(BrazilRealTime.now()))
-            throw new MeetingValidateException("Agendamento não deve ser feito antes da data e hora atual");
+            throw new MeetingValidateException("A reunião não pode ser agendada para uma data no passado.");
     }
 }

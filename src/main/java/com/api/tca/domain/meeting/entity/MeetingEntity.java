@@ -75,6 +75,9 @@ public class MeetingEntity {
     @OneToOne(mappedBy = "meeting")
     private MeetingAnalyseStrategicEntity meetingAnalyseStrategic;
 
+    @OneToOne(mappedBy = "meeting")
+    private MeetingPredictEntity meetingPredict;
+
     public MeetingEntity(RegisterMeetingDto dto) {
         this.title = dto.title();
         this.totvsId = dto.totvsId();

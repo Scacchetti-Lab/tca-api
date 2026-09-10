@@ -1,10 +1,10 @@
 package com.api.tca.domain.meeting.controller;
 
 import com.api.tca.common.model.ApiResponse;
-import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
+import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.user.enums.ProfileTypes;
@@ -14,11 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -101,15 +98,20 @@ public class MeetingController {
         return ResponseEntity.ok(new SuccessResult<>("Reunião encontrada", data));
     }
 
-    @GetMapping("/user/{id}/last")
-    public ResponseEntity<ApiResponse<MeetingDetailedDto>> getLastUserMeeting(@PathVariable UUID id) {
-        var data = meetingService.getUserMeetingByKey(id, false);
+    @GetMapping("/client/{id}/insight")
+    public ResponseEntity<ApiResponse<MeetingDetailedDto>> getClientNextOrLastMeetingStatus(
+            @RequestParam("reference") @Valid SearchReference reference,
+            @PathVariable UUID id
+    ) {
+        var data = meetingService.getClientMeetingByDirection(id, reference == SearchReference.NEXT);
         return ResponseEntity.ok(new SuccessResult<>("Reunião encontrada", data));
     }
 
-    @GetMapping("/user/{id}/next")
-    public ResponseEntity<ApiResponse<MeetingDetailedDto>> getNextUserMeeting(@PathVariable UUID id) {
-        var data = meetingService.getUserMeetingByKey(id, true);
+    @GetMapping("/user/{id}/insight")
+    public ResponseEntity<ApiResponse<MeetingDetailedDto>> getLastUserMeeting(
+            @RequestParam("reference") @Valid SearchReference reference,
+            @PathVariable UUID id) {
+        var data = meetingService.getUserMeetingByKey(id, reference == SearchReference.NEXT);
         return ResponseEntity.ok(new SuccessResult<>("Reunião encontrada", data));
     }
 
