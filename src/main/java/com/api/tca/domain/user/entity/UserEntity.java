@@ -2,6 +2,7 @@ package com.api.tca.domain.user.entity;
 
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.address.entity.AddressEntity;
+import com.api.tca.domain.chat.entity.AiSessionEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
@@ -80,6 +81,8 @@ public class UserEntity {
     @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
     private Set<MeetingEntity> meetings;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<AiSessionEntity> sessions;
 
     public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address) {
         this.fullName = dto.fullName();
