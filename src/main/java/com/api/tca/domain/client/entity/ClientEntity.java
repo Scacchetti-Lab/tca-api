@@ -53,9 +53,6 @@ public class ClientEntity {
 
     private String segment;
 
-    @OneToOne(mappedBy = "client")
-    private ClientAnalyseEntity analyse;
-
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private Set<MeetingEntity> meetings;
 

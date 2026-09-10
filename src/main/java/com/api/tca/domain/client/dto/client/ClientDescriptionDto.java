@@ -3,27 +3,25 @@ package com.api.tca.domain.client.dto.client;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record ClientDetailedDto(
+public record ClientDescriptionDto(
         UUID id,
         String name,
         String fantasyName,
         String cnpj,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
         String email,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
         String phone,
-        String squadName,
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         BigDecimal revenue,
+        String squadName,
+        String segment,
         ClientStatus status
 ) {
 
-    public ClientDetailedDto(ClientEntity client) {
+    public ClientDescriptionDto(ClientEntity client) {
         this(
             client.getId(),
             client.getName(),
@@ -31,8 +29,9 @@ public record ClientDetailedDto(
             client.getCnpj(),
             client.getEmail(),
             client.getPhone(),
-            client.getSquad().getName(),
             client.getRevenue(),
+            client.getSquad().getName(),
+            client.getSegment(),
             client.getStatus()
         );
     }

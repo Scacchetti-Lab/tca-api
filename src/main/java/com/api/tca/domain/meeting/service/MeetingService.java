@@ -23,6 +23,7 @@ import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
+import com.api.tca.domain.transcript.entity.TranscriptEntity;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
 import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.transcript.service.TranscriptService;
@@ -156,8 +157,6 @@ public class MeetingService {
         return new MeetingBasicDataDto(result);
     }
 
-    // TODO - Analise de Transcrição de forma assíncrona
-    // TODO - Criar Chunks e Embeds
     @Transactional
     public MeetingTranscriptBasicDto createAndAnalyseMeetingByRequest(MinimalRegisterMeetingDto request, ProfileTypes userProfile) {
         if (meetingRepository.existsMeetingsByTotvsId(request.totvsId()))
@@ -256,19 +255,25 @@ public class MeetingService {
 
         if (meeting.getClientRepresent() == null || meeting.getClientRepresent().isEmpty())
             meeting.setClientRepresent(description.companyRepresentor());
+        if (client.getSegment() == null || client.getSegment().isEmpty()) {
+            client.setSegment(description.segment());
+            clientService.updateClient(client.getId(), new UpdateClientDto(client.getSegment()));
+        }
+
         meeting.setSummary(description.meetingSummary());
-        Set<StakeholderRegisterDto> stakeholdersList = description.stakeholders().stream().map(StakeholderRegisterDto::new).collect(Collectors.toSet());
+        Set<StakeholderRegisterDto> stakeholdersList = description.stakeholders()
+                .stream().map(StakeholderRegisterDto::new).collect(Collectors.toSet());
+
         addStakeholdersToTheMeeting(meeting.getId(), stakeholdersList, true);
+
         meeting.setPriority(setMeetingPriority(
                 performance.insights().priority(),
                 strategic.insights().priority())
         );
-        client.setSegment(description.segment());
+
         performanceService.addMeetingPerformanceAnalysed(meeting, performance);
         strategicService.addMeetingStrategicAnalysed(meeting, strategic);
-
         meetingRepository.save(meeting);
-        clientService.updateClient(client.getId(), new UpdateClientDto(client.getSegment()));
     }
 
     private MeetingPriority setMeetingPriority(MeetingPriority perfPriority, MeetingPriority stratPriority) {

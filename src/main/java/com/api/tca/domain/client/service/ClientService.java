@@ -3,9 +3,9 @@ package com.api.tca.domain.client.service;
 import com.api.tca.common.ai.dto.request.ClientEmbeddingDto;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.client.dto.analyse.ClientAnalyseDto;
-import com.api.tca.domain.client.dto.analyse.ClientCompleteDto;
-import com.api.tca.domain.client.dto.client.ClientDetailedDto;
+import com.api.tca.domain.client.dto.analyse.ClientAnalysisDto;
+import com.api.tca.domain.client.dto.analyse.ClientDetailedDto;
+import com.api.tca.domain.client.dto.client.ClientDescriptionDto;
 import com.api.tca.domain.client.dto.client.ClientSimplerDto;
 import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
@@ -36,9 +36,6 @@ public class ClientService {
     private ClientRepository clientRepository;
 
     @Autowired
-    private ClientAnalyseService clientAnalyseService;
-
-    @Autowired
     private SquadService squadService;
 
     @Autowired
@@ -62,13 +59,9 @@ public class ClientService {
         return clientRepository.findClientByNameAndIsDeletedFalse(name).orElseThrow(() -> new ClientNotFoundException("Cliente não encontrado"));
     }
 
-    public ClientCompleteDto getCompleteClientById(UUID id) {
-        ClientDetailedDto client = new ClientDetailedDto(getClientById(id));
-        var analyseEntity = clientAnalyseService.getAnalyseByClientId(id);
-        if (analyseEntity == null) return new ClientCompleteDto(client, null);
-
-        ClientAnalyseDto analyse = new ClientAnalyseDto(analyseEntity);
-        return new ClientCompleteDto(client, analyse);
+    public ClientDetailedDto getDetailedClientById(UUID id) {
+       return clientRepository.findClientWithAnalysis(id)
+               .orElseThrow(() -> new ClientNotFoundException("Cliente não encontrado"));
     }
 
     public Page<ClientSimplerDto> getClients(Pageable pageable) {
@@ -76,7 +69,7 @@ public class ClientService {
     }
 
     @Transactional
-    public ClientDetailedDto registerClient(RegisterClientRequestDto request) {
+    public ClientDescriptionDto registerClient(RegisterClientRequestDto request) {
         if (request.email() == null && request.phone() == null) {
             throw new NullableClientContactException("Cliente deve ter email ou telefone como contato");
         }
@@ -94,11 +87,11 @@ public class ClientService {
 
         var newClient = clientRepository.save(clientEntity);
         eventPublisher.publishEvent(new ClientEmbeddingDto(newClient.getId()));
-        return new ClientDetailedDto(clientEntity);
+        return new ClientDescriptionDto(clientEntity);
     }
 
     @Transactional
-    public ClientDetailedDto updateClient(UUID id, UpdateClientDto request) {
+    public ClientDescriptionDto updateClient(UUID id, UpdateClientDto request) {
         ClientEntity oldClient = getClientById(id);
         ClientEntity updatedClient = mapper.mapUpdateClientDtoToClientEntity(request, oldClient);
 
@@ -111,7 +104,7 @@ public class ClientService {
         }
 
         eventPublisher.publishEvent(new ClientEmbeddingDto(updatedClient.getId()));
-        return new ClientDetailedDto(updatedClient);
+        return new ClientDescriptionDto(updatedClient);
     }
 
     @Transactional
