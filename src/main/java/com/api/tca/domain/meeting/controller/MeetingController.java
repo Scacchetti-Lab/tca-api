@@ -128,4 +128,16 @@ public class MeetingController {
         var removedStakeholder = meetingService.deleteStakeholderFromTheMeeting(id, requestParticipants);
         return ResponseEntity.ok(new SuccessResult<>("Participante removido", removedStakeholder));
     }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> completeMeeting(@PathVariable UUID meetingId) {
+        var updatedMeeting = meetingService.completeMeeting(meetingId);
+        return ResponseEntity.ok(new SuccessResult<>("Reunião Concluída", updatedMeeting));
+    }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable UUID meetingId) {
+        var updatedMeeting = meetingService.completeMeeting(meetingId);
+        return ResponseEntity.ok(new SuccessResult<>("Reunião Cancelada", updatedMeeting));
+    }
 }

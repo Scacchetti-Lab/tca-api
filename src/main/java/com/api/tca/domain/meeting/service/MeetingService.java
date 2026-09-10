@@ -302,6 +302,30 @@ public class MeetingService {
         meetingRepository.save(meeting);
     }
 
+    @Transactional
+    public MinimalMeetingDto completeMeeting(UUID meetingId) {
+        var meeting = getMeetingEntityById(meetingId);
+        if (meeting.getStatus() == MeetingStatus.COMPLETED)
+            throw new MeetingValidateException("Reunião já foi concluída");
+        if (meeting.getStatus() == MeetingStatus.CANCELLED)
+            throw new MeetingValidateException("Reunião cancelada não pode ser concluída");
+
+        meeting.setStatus(MeetingStatus.COMPLETED);
+        return new MinimalMeetingDto(meeting);
+    }
+
+    @Transactional
+    public MinimalMeetingDto cancelledMeeting(UUID meetingId) {
+        var meeting = getMeetingEntityById(meetingId);
+        if (meeting.getStatus() == MeetingStatus.CANCELLED)
+            throw new MeetingValidateException("Reunião já foi cancelada");
+        if (meeting.getStatus() == MeetingStatus.COMPLETED)
+            throw new MeetingValidateException("Reunião concluída não pode ser cancelada");
+
+        meeting.setStatus(MeetingStatus.CANCELLED);
+        return new MinimalMeetingDto(meeting);
+    }
+
     private MeetingPriority setMeetingPriority(MeetingPriority perfPriority, MeetingPriority stratPriority) {
         if (stratPriority == perfPriority) return perfPriority;
         if (stratPriority == MeetingPriority.HIGH) return stratPriority;
