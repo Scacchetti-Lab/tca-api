@@ -7,6 +7,8 @@ import com.api.tca.domain.chat.dto.response.ChatSessionDto;
 import com.api.tca.domain.chat.dto.response.ChatSessionWithOutputDto;
 import com.api.tca.domain.chat.dto.response.MessageResponseDto;
 import com.api.tca.domain.chat.service.AISessionService;
+import com.api.tca.domain.user.service.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.aspectj.bridge.Message;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +25,11 @@ public class SessionController {
     @Autowired
     private AISessionService sessionService;
 
+    @Autowired
+    private TokenService tokenService;
+
     @PostMapping
-    public ResponseEntity<ApiResponse<ChatSessionWithOutputDto>> startNewChat() {
+    public ResponseEntity<String> startNewChat(HttpServletRequest request) {
         throw new RuntimeException("Not implemented yet");
     }
 

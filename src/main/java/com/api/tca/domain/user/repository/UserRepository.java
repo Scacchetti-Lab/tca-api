@@ -1,6 +1,7 @@
 package com.api.tca.domain.user.repository;
 
 import com.api.tca.domain.user.entity.UserEntity;
+import com.api.tca.domain.user.security.UserSecurity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
