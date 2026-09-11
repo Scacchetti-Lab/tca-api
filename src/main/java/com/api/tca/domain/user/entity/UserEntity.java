@@ -54,7 +54,7 @@ public class UserEntity {
 
     private int score;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_profiles",
             joinColumns = @JoinColumn(name = "user_id"),
