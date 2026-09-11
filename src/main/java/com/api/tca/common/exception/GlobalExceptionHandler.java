@@ -3,6 +3,8 @@ package com.api.tca.common.exception;
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.FailureResult;
+import com.api.tca.domain.chat.exception.InvalidTItleException;
+import com.api.tca.domain.chat.exception.MessageSendFailedException;
 import com.api.tca.domain.email.exception.EmailFailed;
 import com.api.tca.domain.meeting.exception.analyses.FailedOnEmbeddingException;
 import com.api.tca.domain.meeting.exception.rules.MeetingAlreadyExistsException;
@@ -63,6 +65,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleEmailFailed(EmailFailed ex) {
         var serverResponse = ApiResponse.invalid("424", ex.getMessage());
         return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(serverResponse);
+    }
+
+    @ExceptionHandler({InvalidTItleException.class, MessageSendFailedException.class})
+    public ResponseEntity<ApiResponse<?>> handleInvalidTitle(InvalidTItleException ex) {
+        var serverResponse = ApiResponse.invalid("400", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(serverResponse);
     }
 
     @ExceptionHandler(PasswordsAreEquals.class)

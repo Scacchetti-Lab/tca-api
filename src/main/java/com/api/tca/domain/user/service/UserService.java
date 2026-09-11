@@ -88,6 +88,13 @@ public class UserService implements UserDetailsService {
         return userEntity;
     }
 
+    public UserEntity getUserByEmail(String email) {
+        var user = userRepository.findUserByEmailAndIsDeletedFalse(email);
+        if (user == null)
+            throw new UsernameNotFoundException("Usuário não encontrado");
+        return user;
+    }
+
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
         AddressEntity userAddress = addressService.findOrCreateAddressByPostalCode(request.address());

@@ -1,5 +1,6 @@
 package com.api.tca.domain.chat.entity;
 
+import com.api.tca.domain.chat.dto.request.NewChatDto;
 import com.api.tca.domain.chat.enums.AiModel;
 import com.api.tca.domain.user.entity.UserEntity;
 import jakarta.persistence.*;
@@ -35,4 +36,14 @@ public class AiSessionEntity {
 
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
     private Set<AiMessagesEntity> messages;
+
+
+    public AiSessionEntity(NewChatDto request, UserEntity user) {
+        this.title = "NÃO DEFINIDO";
+        this.user = user;
+        this.createdOn = LocalDateTime.now();
+        this.lastActivity = LocalDateTime.now();
+        this.isDeleted = false;
+        this.modelUsed = request.model();
+    }
 }

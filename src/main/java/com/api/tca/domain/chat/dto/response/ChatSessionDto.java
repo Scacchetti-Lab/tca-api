@@ -1,5 +1,6 @@
 package com.api.tca.domain.chat.dto.response;
 
+import com.api.tca.domain.chat.entity.AiSessionEntity;
 import com.api.tca.domain.user.dto.user.MinimalUserDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -17,4 +18,12 @@ public record ChatSessionDto(
     @NotNull
     LocalDateTime lastActivity
 ) {
+
+    public ChatSessionDto(AiSessionEntity entity) {
+        this(
+                entity.getTitle(),
+                new MinimalUserDto(entity.getUser()),
+                entity.getLastActivity()
+        );
+    }
 }

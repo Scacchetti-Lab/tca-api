@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface SessionRepository extends JpaRepository<AiSessionEntity, UUID> {
     Page<AiSessionEntity> findAllByUserIdAndIsDeletedFalse(UUID userId, Pageable pageable);
     Optional<AiSessionEntity> findByTitleAndUserIdAndIsDeletedFalse(String title, UUID userId);
+    Optional<AiSessionEntity> findByIdAndUserId(UUID id, UUID userId);
 }

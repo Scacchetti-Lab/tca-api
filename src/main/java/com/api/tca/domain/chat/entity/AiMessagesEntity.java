@@ -1,5 +1,6 @@
 package com.api.tca.domain.chat.entity;
 
+import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.chat.enums.UserRoles;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,5 +31,15 @@ public class AiMessagesEntity {
     private String content;
 
     private LocalDateTime createdOn;
+
+    private String interactionId;
+
+    public AiMessagesEntity(String content, AiSessionEntity session, UserRoles role,  String interactionId) {
+        this.content = content;
+        this.session = session;
+        this.role = role;
+        this.createdOn = BrazilRealTime.now();
+        this.interactionId = interactionId;
+    }
 
 }

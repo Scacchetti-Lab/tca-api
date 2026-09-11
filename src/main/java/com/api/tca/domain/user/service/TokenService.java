@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,7 @@ public class TokenService {
             String content = JWT.require(algorithm)
                     .withIssuer("TCA api")
                     .build()
-                    .verify(tokenJWT)
+                    .verify(getToken(tokenJWT))
                     .getSubject();
             String[] split = content.split("\\|");
             return new TokenRegisterDto(split[1], split[0], split[2]);
@@ -49,6 +50,15 @@ public class TokenService {
             System.out.println(Arrays.toString(exception.getStackTrace()));
             throw new RuntimeException("Token JWT inválido ou expirado", exception);
         }
+    }
+
+    public TokenRegisterDto getAuthenticatedUser(HttpServletRequest httpRequest) {
+        var token = httpRequest.getHeader("Authorization");
+        return getSubject(token);
+    }
+
+    private String getToken(String tokenJWT) {
+        return tokenJWT.replace("Bearer ", "");
     }
 
     private Instant getExpireDate() {
