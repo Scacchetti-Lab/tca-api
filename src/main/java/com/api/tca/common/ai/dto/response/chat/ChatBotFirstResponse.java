@@ -6,7 +6,7 @@ public record ChatBotFirstResponse(
         String title,
         String reply,
 
-        @JsonProperty("previous_interact_id")
+        @JsonProperty("previous_interaction_id")
         String previousInteractId,
 
         @JsonProperty("tokens_used")

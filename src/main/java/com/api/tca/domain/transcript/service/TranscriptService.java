@@ -30,6 +30,13 @@ public class TranscriptService {
     }
 
     @Transactional
+    public void updateResume(UUID id, String resume) {
+       var transcript = getTranscriptById(id);
+       transcript.setResume(resume);
+       transcriptRepository.save(transcript);
+    }
+
+    @Transactional
     public void updateStatus(UUID transcriptId, TranscriptStatus newStatus) {
         TranscriptEntity transcript = getTranscriptById(transcriptId);
         transcript.setStatus(newStatus);

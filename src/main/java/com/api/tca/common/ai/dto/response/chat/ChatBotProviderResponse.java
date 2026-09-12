@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record ChatBotProviderResponse(
         String reply,
 
-        @JsonProperty("previous_interact_id")
+        @JsonProperty("previous_interaction_id")
         String previousInteractId,
 
         @JsonProperty("tokens_used")

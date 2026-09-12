@@ -1,7 +1,6 @@
 package com.api.tca.domain.chat.service;
 
 import com.api.tca.common.ai.dto.request.chat.ChatBotProviderRequest;
-import com.api.tca.common.ai.dto.response.chat.ChatBotProviderResponse;
 import com.api.tca.common.ai.provider.ChatBotProvider;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.chat.dto.request.ChatBotRequestDto;
@@ -10,7 +9,6 @@ import com.api.tca.domain.chat.dto.response.ChatBotResponseDto;
 import com.api.tca.domain.chat.dto.response.ChatSessionDto;
 import com.api.tca.domain.chat.dto.response.ChatSessionWithOutputDto;
 import com.api.tca.domain.chat.dto.response.MessageResponseDto;
-import com.api.tca.domain.chat.entity.AiMessagesEntity;
 import com.api.tca.domain.chat.entity.AiSessionEntity;
 import com.api.tca.domain.chat.exception.InvalidTItleException;
 import com.api.tca.domain.chat.exception.MessageSendFailedException;
@@ -56,7 +54,6 @@ public class AISessionService {
         UserEntity user = userService.getUserByEmail(userEmail);
 
         var response = chatBotProvider.startChat(request.input());
-        System.out.println(response);
         if (!response.isValid())
             throw new SessionCreateFailedException("Ocorreu uma falha ao tentar criar um novo chat");
 
@@ -74,9 +71,9 @@ public class AISessionService {
     }
 
     @Transactional
-    public ChatBotResponseDto sendMessage(ChatBotRequestDto request, String userEmail, Boolean reprocess) {
+    public ChatBotResponseDto sendMessage(UUID sessionId, ChatBotRequestDto request, String userEmail, Boolean reprocess) {
         UserEntity user = userService.getUserByEmail(userEmail);
-        AiSessionEntity currentSession = getSession(request.sessionId(), user.getId());
+        AiSessionEntity currentSession = getSession(sessionId, user.getId());
 
         if (reprocess) {
             String restoredInteractionId = messageService.deleteLastConversation(currentSession);
@@ -88,7 +85,8 @@ public class AISessionService {
             throw new MessageSendFailedException("Ocorreu uma falha ao tentar enviar a mensagem");
 
         var data = response.content();
-        currentSession.setLastInteractionId(data.previousInteractId());
+        if (data.previousInteractId() != null)
+            currentSession.setLastInteractionId(data.previousInteractId());
         user.setAiTokenUsed(user.getAiTokenUsed() + data.tokensUsed());
         messageService.createConversation(request.input(), data.reply(), currentSession, user.getFirstProfileName(), data.previousInteractId());
 

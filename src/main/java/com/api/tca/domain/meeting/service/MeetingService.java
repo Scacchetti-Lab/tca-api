@@ -65,8 +65,8 @@ public class MeetingService {
     private MeetingMapper mapper;
 
     @Autowired
-    private TranscriptService transcriptService;
 
+    private TranscriptService transcriptService;
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
@@ -287,6 +287,7 @@ public class MeetingService {
         }
 
         meeting.setSummary(description.meetingSummary());
+        transcriptService.updateResume(meeting.getTranscript().getId(), description.meetingSummary());
         Set<StakeholderRegisterDto> stakeholdersList = description.stakeholders()
                 .stream().map(StakeholderRegisterDto::new).collect(Collectors.toSet());
 

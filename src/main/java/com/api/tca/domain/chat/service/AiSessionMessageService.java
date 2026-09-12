@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -34,7 +35,7 @@ public class AiSessionMessageService {
         var userMsg = new AiMessagesEntity(input, session, UserRoleHelper.normalize(profileName), null);
         var totvsAiMsg = new AiMessagesEntity(output, session, UserRoles.TOTVS_AI, interactionId);
 
-        messageRepository.saveAll(Set.of(userMsg, totvsAiMsg));
+        messageRepository.saveAll(List.of(userMsg, totvsAiMsg));
     }
 
     @Transactional
