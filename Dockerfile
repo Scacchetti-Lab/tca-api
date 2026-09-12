@@ -11,4 +11,4 @@ COPY --from=build /app/target/*.jar app.jar
 ENV JAVA_OPTS="-Xmx350m -Xss256k"
 
 EXPOSE 8080
-CMD ["java", "$JAVA_OPTS", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
