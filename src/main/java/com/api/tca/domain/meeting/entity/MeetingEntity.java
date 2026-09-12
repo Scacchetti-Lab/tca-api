@@ -69,6 +69,9 @@ public class MeetingEntity {
 
     private Boolean isDeleted;
 
+    @JdbcTypeCode(SqlTypes.SMALLINT)
+    private Integer rating;
+
     @OneToOne(mappedBy = "meeting")
     private MeetingAnalysePerformanceEntity meetingAnalysePerformance;
 
@@ -89,6 +92,7 @@ public class MeetingEntity {
         this.performanceAvg = 0;
         this.durationMin = 0;
         this.status = MeetingStatus.SCHEDULED;
+        this.rating = 0;
     }
 
     public MeetingEntity(MinimalRegisterMeetingDto dto) {
@@ -100,6 +104,7 @@ public class MeetingEntity {
         this.performanceAvg = 0;
         this.durationMin = 0;
         this.status = MeetingStatus.COMPLETED;
+        this.rating = 0;
     }
 
     public void removeEmployee(UserEntity user) {

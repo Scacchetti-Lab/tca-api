@@ -37,6 +37,8 @@ public record RegisterClientRequestDto(
         String email,
 
         @Pattern(regexp = "^\\+?[\\d\\s\\-()]+$")
-        String phone
+        String phone,
+
+        String segment
 ) {
 }
