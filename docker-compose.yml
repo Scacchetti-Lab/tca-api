@@ -1,17 +1,13 @@
-services:
-  db:
-    container_name: totvsai_postgres_container
-    image: pgvector/pgvector:pg18
-    restart: always
-    environment:
-      POSTGRES_USER: ${PG_USERNAME}
-      POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_DB: ${PG_DBNAME}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+COPY . .
+RUN ./mvnw clean package -DskipTests
 
-volumes:
-  postgres_data:
-    driver: local
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+
+ENV JAVA_OPTS="-Xmx350m -Xss256k"
+  
+EXPOSE 8080
+CMD java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar

@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 @Service
 public class TokenService {
@@ -32,6 +33,9 @@ public class TokenService {
                     .sign(algorithm);
         } catch (JWTCreationException exception){
             throw new RuntimeException("Erro ao gerar o token JWT", exception);
+        }
+        catch (NoSuchElementException ex) {
+            throw new RuntimeException("Usuário incompleto, faltam dados para cadastro.");
         }
     }
 
