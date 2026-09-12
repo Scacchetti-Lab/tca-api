@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/chat")
+@RequestMapping("chat")
 public class SessionController {
 
     @Autowired
@@ -42,18 +42,19 @@ public class SessionController {
 
     @PostMapping("/{id}/message")
     public ResponseEntity<ApiResponse<ChatBotResponseDto>> sendMessage(
+            @PathVariable UUID id,
             @RequestParam("reprocess") Boolean reprocess,
             @RequestBody @Valid ChatBotRequestDto request,
             HttpServletRequest httpRequest) {
         var tokenData = tokenService.getAuthenticatedUser(httpRequest);
-        var result = sessionService.sendMessage(request, tokenData.email(), reprocess);
+        var result = sessionService.sendMessage(id, request, tokenData.email(), reprocess);
         return ResponseEntity.status(HttpStatus.OK).body(new SuccessResult<>("Sessão criada", result));
     }
 
     @GetMapping("/user/{id}")
     public ResponseEntity<ApiResponse<Page<ChatSessionDto>>> listSessions(@PathVariable UUID id, Pageable pageable) {
         var sessions = sessionService.getAllSessionByUser(id, pageable);
-        return ResponseEntity.ok(new SuccessResult<>("Encontramos " + sessions.stream().count() + "sessões", sessions));
+        return ResponseEntity.ok(new SuccessResult<>("Encontramos " + sessions.stream().count() + " sessões", sessions));
     }
 
     @GetMapping("/{sessionId}/messages")
