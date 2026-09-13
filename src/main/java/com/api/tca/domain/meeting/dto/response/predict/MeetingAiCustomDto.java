@@ -1,9 +1,5 @@
 package com.api.tca.domain.meeting.dto.response.predict;
 
-import com.api.tca.domain.client.entity.ClientEntity;
-import com.api.tca.domain.client.enums.ClientStatus;
-import com.api.tca.domain.meeting.dto.score.PerformanceAnalyseDto;
-import com.api.tca.domain.meeting.dto.score.StrategicAnalyseDto;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
@@ -23,7 +19,7 @@ public record MeetingAiCustomDto(
 
         @JsonProperty("data")
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        MeetingPredictDto nextMeeting,
+        MeetingPredictResponseDto nextMeeting,
 
         @JsonProperty("data")
         @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -55,7 +51,7 @@ public record MeetingAiCustomDto(
         );
     }
 
-    public MeetingAiCustomDto(MeetingEntity meeting, MeetingPredictDto predict) {
+    public MeetingAiCustomDto(MeetingEntity meeting, MeetingPredictResponseDto predict) {
         this(
                 meeting.getTitle(),
                 meeting.getTotvsId(),

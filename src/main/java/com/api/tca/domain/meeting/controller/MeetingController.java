@@ -5,7 +5,7 @@ import com.api.tca.common.model.SuccessResult;
 import com.api.tca.common.model.dto.PredictRequestDto;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
-import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictDto;
+import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
 import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
@@ -144,7 +144,7 @@ public class MeetingController {
     }
 
     @PostMapping("/predict")
-    public ResponseEntity<ApiResponse<MeetingPredictDto>> predictNextClientMeetingBaseOnHistory(@RequestBody @Valid PredictRequestDto request) {
+    public ResponseEntity<ApiResponse<MeetingPredictResponseDto>> predictNextClientMeetingBaseOnHistory(@RequestBody @Valid PredictRequestDto request) {
         var predict = meetingService.predictFutureMeeting(request.entityId(), request.reprocess());
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Previsão criada", predict));
     }

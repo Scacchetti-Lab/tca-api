@@ -1,21 +1,29 @@
 package com.api.tca.domain.client.service;
 
 import com.api.tca.common.ai.dto.request.ClientEmbeddingDto;
+import com.api.tca.common.ai.dto.request.predict.PredictEventRequestDto;
+import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
-import com.api.tca.domain.client.dto.analyse.ClientAnalysisDto;
 import com.api.tca.domain.client.dto.analyse.ClientDetailedDto;
 import com.api.tca.domain.client.dto.client.ClientDescriptionDto;
 import com.api.tca.domain.client.dto.client.ClientSimplerDto;
 import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.entity.ClientEntity;
+import com.api.tca.domain.client.entity.ClientPredictEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
 import com.api.tca.domain.client.exception.ClientNotFoundException;
 import com.api.tca.domain.client.exception.InvalidClientStatusException;
 import com.api.tca.domain.client.exception.NullableClientContactException;
 import com.api.tca.domain.client.mapper.ClientMapper;
+import com.api.tca.domain.client.repository.ClientPredictRepository;
 import com.api.tca.domain.client.repository.ClientRepository;
+import com.api.tca.domain.client.validation.ClientPredictValidate;
+import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
+import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
+import com.api.tca.domain.meeting.enums.PredictProcessStatus;
+import com.api.tca.domain.meeting.exception.rules.MeetingNotFoundException;
 import com.api.tca.domain.squad.entity.SquadEntity;
 import com.api.tca.domain.squad.service.SquadService;
 import jakarta.transaction.Transactional;
@@ -26,6 +34,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -47,6 +56,12 @@ public class ClientService {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private List<ClientPredictValidate> clValidate;
+
+    @Autowired
+    private ClientPredictRepository predictRepository;
+
     public ClientEntity getClientById(UUID id) {
         return clientRepository.findByIdAndIsDeletedFalse(id).orElseThrow(() -> new ClientNotFoundException("Cliente não encontrado"));
     }
@@ -66,6 +81,10 @@ public class ClientService {
 
     public Page<ClientSimplerDto> getClients(Pageable pageable) {
         return clientRepository.findAllClientsByIsDeletedFalse(pageable).map(ClientSimplerDto::new);
+    }
+
+    public ClientPredictEntity getPredictByClientId(UUID id) {
+        return predictRepository.findByClientId(id).orElseThrow(() -> new ClientNotFoundException("Previsão não encontrada"));
     }
 
     @Transactional
@@ -112,6 +131,51 @@ public class ClientService {
         ClientEntity clientEntity = getClientById(id);
         clientEntity.setStatus(ClientStatus.DELETED);
         clientEntity.setDeleted(true);
+    }
+
+    @Transactional
+    public ClientPredictResponseDto predictClientRelationship(UUID id, Boolean reprocess) {
+        ClientEntity clientEntity = getClientById(id);
+        clValidate.forEach(v -> v.validate(clientEntity));
+        var predictEntity = predictRepository.findByClientId(clientEntity.getId())
+                .orElse(null);
+
+        if (predictEntity == null) {
+            var newPredict = predictRepository.save(new ClientPredictEntity(clientEntity));
+            eventPublisher.publishEvent(new PredictEventRequestDto(clientEntity.getId(), false));
+            return new ClientPredictResponseDto(newPredict);
+        }
+
+        if (predictEntity.getStatus().equals(PredictProcessStatus.CANCELLED)) {
+            predictEntity.setStatus(PredictProcessStatus.CREATED);
+            predictRepository.save(predictEntity);
+            eventPublisher.publishEvent(new PredictEventRequestDto(clientEntity.getId(), true));
+            return new ClientPredictResponseDto(predictEntity);
+        }
+
+        if (!reprocess) return new ClientPredictResponseDto(predictEntity);
+        if (predictEntity.getReprocess()) {
+            throw new FailOnPredictException(
+                    "Esta previsão já foi reprocessada uma vez e não pode ser gerada novamente.");
+        }
+
+        eventPublisher.publishEvent(new PredictEventRequestDto(clientEntity.getId(), true));
+        return new ClientPredictResponseDto(predictEntity);
+    }
+
+    @Transactional
+    public void addPredictData(ClientPredictEntity predictEntity, String predict, boolean reprocess) {
+        predictEntity.setStatus(PredictProcessStatus.COMPLETED);
+        predictEntity.setReprocess(reprocess);
+        predictEntity.setPredict(predict);
+        predictRepository.save(predictEntity);
+    }
+
+    @Transactional
+    public void updatePredictStatus(UUID id, PredictProcessStatus status) {
+        var predict = getPredictByClientId(id);
+        predict.setStatus(status);
+        predictRepository.save(predict);
     }
 
     private static String cleanCnpj(String cnpj) {

@@ -8,11 +8,12 @@ import com.api.tca.common.ai.dto.response.transcript.TranscriptAnalyseDto;
 import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
+import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
-import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictDto;
+import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
 import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
@@ -168,25 +169,33 @@ public class MeetingService {
     }
 
     @Transactional
-    public MeetingPredictDto predictFutureMeeting(UUID id, Boolean reprocess) {
+    public MeetingPredictResponseDto predictFutureMeeting(UUID id, Boolean reprocess) {
         MeetingEntity meetingEntity = getMeetingEntityById(id);
         mpValidator.forEach(v -> v.validate(meetingEntity));
         var predictEntity = predictRepository.findByMeetingId(meetingEntity.getId())
                 .orElse(null);
 
-        if (predictEntity == null || predictEntity.getStatus() == PredictProcessStatus.CANCELLED) {
+        if (predictEntity == null) {
             var newPredict = predictRepository.save(new MeetingPredictEntity(meetingEntity));
             eventPublisher.publishEvent(new PredictEventRequestDto(meetingEntity.getId(), false));
-            return new MeetingPredictDto(newPredict);
+            return new MeetingPredictResponseDto(newPredict);
         }
-        if (!reprocess) return new MeetingPredictDto(predictEntity);
+
+        if (predictEntity.getStatus().equals(PredictProcessStatus.CANCELLED)) {
+            predictEntity.setStatus(PredictProcessStatus.CREATED);
+            predictRepository.save(predictEntity);
+            eventPublisher.publishEvent(new PredictEventRequestDto(meetingEntity.getId(), false));
+            return new MeetingPredictResponseDto(predictEntity);
+        }
+
+        if (!reprocess) return new MeetingPredictResponseDto(predictEntity);
         if (predictEntity.getReprocess()) {
             throw new FailOnPredictException(
                     "Esta previsão já foi reprocessada uma vez e não pode ser gerada novamente.");
         }
 
         eventPublisher.publishEvent(new PredictEventRequestDto(meetingEntity.getId(), true));
-        return new MeetingPredictDto(predictEntity);
+        return new MeetingPredictResponseDto(predictEntity);
     }
 
     @Transactional
