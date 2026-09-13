@@ -51,7 +51,8 @@ public class MeetingListenerService {
 
             meetingProvider.createEmbeds(event.meetingId());
         } catch (Exception ex) {
-            log.error("Falha ao processar transcrição {}", transcriptRequest.transcriptId(), ex);
+            if (transcriptRequest != null) log.error("Falha ao processar transcrição {}", transcriptRequest.transcriptId(), ex);
+            else log.error("Falha ao processar transcrição", ex);
             transcriptService.updateStatus(transcriptRequest.transcriptId(), TranscriptStatus.ERROR);
         }
     }
