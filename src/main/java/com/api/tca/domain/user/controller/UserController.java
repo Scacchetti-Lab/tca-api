@@ -5,6 +5,7 @@ import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.domain.user.dto.user.*;
 import com.api.tca.domain.user.service.UserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@SecurityRequirement(name = "bearer-key")
 @RestController
 @RequestMapping("/user")
 public class UserController {

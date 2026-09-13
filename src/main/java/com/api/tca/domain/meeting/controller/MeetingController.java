@@ -10,6 +10,7 @@ import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.user.enums.ProfileTypes;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import java.net.URI;
 import java.util.Set;
 import java.util.UUID;
 
+@SecurityRequirement(name = "bearer-key")
 @RestController
 @RequestMapping("meeting")
 public class MeetingController {

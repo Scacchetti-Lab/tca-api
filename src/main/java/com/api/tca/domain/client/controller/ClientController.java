@@ -10,6 +10,7 @@ import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
 import com.api.tca.domain.client.service.ClientService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.UUID;
 
+@SecurityRequirement(name = "bearer-key")
 @RestController
 @RequestMapping("client")
 public class ClientController {
