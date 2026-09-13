@@ -3,24 +3,30 @@ package com.api.tca.domain.meeting.service;
 import com.api.tca.common.ai.dto.request.ClientContextRequestDto;
 import com.api.tca.common.ai.dto.request.MeetingTranscriptProcessDto;
 import com.api.tca.common.ai.dto.request.TranscriptProcessRequestDto;
+import com.api.tca.common.ai.dto.request.predict.PredictEventRequestDto;
 import com.api.tca.common.ai.dto.response.transcript.TranscriptAnalyseDto;
+import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
-import com.api.tca.domain.meeting.dto.response.predict.MeetingAiCustomDto;
+import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictDto;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
 import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
 import com.api.tca.domain.meeting.enums.MeetingUserSource;
+import com.api.tca.domain.meeting.enums.PredictProcessStatus;
 import com.api.tca.domain.meeting.exception.rules.*;
 import com.api.tca.domain.meeting.mapper.MeetingMapper;
+import com.api.tca.domain.meeting.repository.MeetingPredictRepository;
 import com.api.tca.domain.meeting.repository.MeetingRepository;
 import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
 import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
+import com.api.tca.domain.meeting.validations.predict.MeetingPredictValidation;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
@@ -53,6 +59,9 @@ public class MeetingService {
     private MeetingRepository meetingRepository;
 
     @Autowired
+    private MeetingPredictRepository predictRepository;
+
+    @Autowired
     private MeetingStakeHolderRepository stakeholderRepository;
 
     @Autowired
@@ -65,8 +74,8 @@ public class MeetingService {
     private MeetingMapper mapper;
 
     @Autowired
-
     private TranscriptService transcriptService;
+
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
@@ -78,6 +87,9 @@ public class MeetingService {
 
     @Autowired
     private List<StakeholderValidate> shValidator;
+
+    @Autowired
+    private List<MeetingPredictValidation> mpValidator;
 
     @Autowired
     private List<MeetingValidate> mtValidator;
@@ -124,6 +136,10 @@ public class MeetingService {
         return new MeetingDetailedDto(entity, stakeHolders);
     }
 
+    public MeetingPredictEntity getPredictByMeetingId(UUID id) {
+        return predictRepository.findByMeetingId(id).orElseThrow(() -> new MeetingNotFoundException("Previsão não encontrada"));
+    }
+
     public MeetingDetailedDto getUserMeetingByKey(UUID id, Boolean isNext) {
         Pageable limitOne = PageRequest.of(0, 1);
         var results = isNext
@@ -151,11 +167,33 @@ public class MeetingService {
         return new MeetingDetailedDto(searchedMeeting, stakeHolders);
     }
 
-    public MeetingAiCustomDto predictFutureMeeting(UUID id) {
+    @Transactional
+    public MeetingPredictDto predictFutureMeeting(UUID id, Boolean reprocess) {
         MeetingEntity meetingEntity = getMeetingEntityById(id);
-        // TODO: Primeiro busca pela tabela meeting_predicts para checar se já não existe (retorna caso já tenha)
-        // TODO: Novas previsões passam pelo Gemini (provider) e evento assíncrono de processo
-        return null;
+        mpValidator.forEach(v -> v.validate(meetingEntity));
+        var predictEntity = predictRepository.findByMeetingId(meetingEntity.getId())
+                .orElse(null);
+
+        if (predictEntity == null || predictEntity.getStatus() == PredictProcessStatus.CANCELLED) {
+            var newPredict = predictRepository.save(new MeetingPredictEntity(meetingEntity));
+            eventPublisher.publishEvent(new PredictEventRequestDto(meetingEntity.getId(), false));
+            return new MeetingPredictDto(newPredict);
+        }
+        if (!reprocess) return new MeetingPredictDto(predictEntity);
+        if (predictEntity.getReprocess()) {
+            throw new FailOnPredictException(
+                    "Esta previsão já foi reprocessada uma vez e não pode ser gerada novamente.");
+        }
+
+        eventPublisher.publishEvent(new PredictEventRequestDto(meetingEntity.getId(), true));
+        return new MeetingPredictDto(predictEntity);
+    }
+
+    @Transactional
+    public void updatePredictStatus(UUID id, PredictProcessStatus status) {
+        var predict = getPredictByMeetingId(id);
+        predict.setStatus(status);
+        predictRepository.save(predict);
     }
 
     @Transactional
@@ -316,7 +354,7 @@ public class MeetingService {
     }
 
     @Transactional
-    public MinimalMeetingDto cancelledMeeting(UUID meetingId) {
+    public MinimalMeetingDto cancelMeeting(UUID meetingId) {
         var meeting = getMeetingEntityById(meetingId);
         if (meeting.getStatus() == MeetingStatus.CANCELLED)
             throw new MeetingValidateException("Reunião já foi cancelada");
@@ -384,5 +422,13 @@ public class MeetingService {
         if (!request.clientName().isEmpty())
             return clientService.getClientByName(request.clientName());
         throw new MeetingValidateException("Cliente precisa ser identificado pelo Id ou pelo nome");
+    }
+
+    @Transactional
+    public void addPredictData(MeetingPredictEntity predictEntity, String predict, boolean reprocess) {
+        predictEntity.setStatus(PredictProcessStatus.COMPLETED);
+        predictEntity.setReprocess(reprocess);
+        predictEntity.setPredict(predict);
+        predictRepository.save(predictEntity);
     }
 }

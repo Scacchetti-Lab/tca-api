@@ -2,11 +2,17 @@ package com.api.tca.domain.meeting.service;
 
 import com.api.tca.common.ai.dto.request.MeetingTranscriptProcessDto;
 import com.api.tca.common.ai.dto.request.TranscriptEmbeddingDto;
+import com.api.tca.common.ai.dto.request.predict.PredictEventRequestDto;
 import com.api.tca.common.ai.provider.MeetingAnalyseProvider;
 import com.api.tca.common.ai.provider.TranscriptProvider;
+import com.api.tca.common.exception.custom.FailOnPredictException;
+import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
+import com.api.tca.domain.meeting.enums.PredictProcessStatus;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
 import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.transcript.service.TranscriptService;
+import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -64,4 +70,23 @@ public class MeetingListenerService {
     }
 
     // TODO: Método para excluir todas as referências de transcrição caso ocorra algum erro
+
+    @Async
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    public void onMeetingPredictCreated(PredictEventRequestDto event) {
+        try {
+            meetingService.updatePredictStatus(event.entityId(), PredictProcessStatus.PROCESSING);
+            var response = meetingProvider.predictFutureMeetings(event.entityId());
+            if (!response.isValid())
+                throw new FailOnPredictException(response.message());
+
+            var predictEntity = meetingService.getPredictByMeetingId(event.entityId());
+
+            meetingService.addPredictData(predictEntity, response.content().predict(), event.reprocess());
+        }
+        catch (Exception ex) {
+            log.error("Falha ao processar predição {}", event.entityId(), ex);
+            meetingService.updatePredictStatus(event.entityId(), PredictProcessStatus.CANCELLED);
+        }
+    }
 }

@@ -27,13 +27,18 @@ public class MeetingPredictEntity {
     @Column(columnDefinition = "TEXT")
     private String predict;
 
-    @Column(columnDefinition = "TEXT")
-    private String tips;
-
     @Enumerated(EnumType.STRING)
     PredictProcessStatus status;
 
     Boolean reprocess;
 
     LocalDateTime created_at = BrazilRealTime.now();
+
+    public MeetingPredictEntity(MeetingEntity meeting) {
+        this.meeting = meeting;
+        this.predict = "EM PROCESSAMENTO";
+        this.status = PredictProcessStatus.CREATED;
+        this.reprocess = false;
+        this.created_at = BrazilRealTime.now();
+    }
 }
