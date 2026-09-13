@@ -19,6 +19,8 @@ import com.api.tca.domain.user.security.UserSecurity;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -57,6 +59,10 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private UserMapper mapper;
+
+    public Page<UserResponseDto> findAllUsers(Pageable pageable) {
+        return userRepository.findAllByIsDeletedFalse(pageable).map(UserResponseDto::new);
+    }
 
     public AuthResponseDto authenticate(AuthenticationManager manager, AuthenticateDto data) {
         var token = new UsernamePasswordAuthenticationToken(data.email(), data.password());

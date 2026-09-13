@@ -2,6 +2,8 @@ package com.api.tca.domain.user.repository;
 
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.security.UserSecurity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,5 +22,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByIsDeletedFalseAndUsernameOrIsDeletedFalseAndEmail(String username, String email);
 
     UserEntity findUserByIdAndIsDeletedFalse(UUID id);
+
+    Page<UserEntity> findAllByIsDeletedFalse(Pageable pageable);
 
 }

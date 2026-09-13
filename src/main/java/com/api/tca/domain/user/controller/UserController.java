@@ -8,6 +8,8 @@ import com.api.tca.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -72,6 +74,12 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserDetails(@PathVariable UUID id) {
         var userDto = new UserResponseDto(userService.getUserById(id));
+        return ResponseEntity.ok().body(new SuccessResult<>("Usuário encontrado", userDto));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<UserResponseDto>>> getAllUsers(Pageable pageable) {
+        var userDto = userService.findAllUsers(pageable);
         return ResponseEntity.ok().body(new SuccessResult<>("Usuário encontrado", userDto));
     }
 }

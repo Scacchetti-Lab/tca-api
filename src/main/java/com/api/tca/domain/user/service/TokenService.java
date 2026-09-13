@@ -25,7 +25,7 @@ public class TokenService {
     public String generateToken(UserEntity user) {
         try {
             var algorithm = Algorithm.HMAC256(secret);
-            var jwtContent = String.format("%s|%s|%s", user.getEmail(), user.getUsername(), user.getFirstProfileName());
+            var jwtContent = String.format("%s|%s|%s|%s", user.getId(), user.getEmail(), user.getUsername(), user.getFirstProfileName());
             return JWT.create()
                     .withIssuer("TCA api")
                     .withSubject(jwtContent)
@@ -48,7 +48,7 @@ public class TokenService {
                     .verify(getToken(tokenJWT))
                     .getSubject();
             String[] split = content.split("\\|");
-            return new TokenRegisterDto(split[1], split[0], split[2]);
+            return new TokenRegisterDto(split[0], split[2], split[1], split[3]);
 
         } catch (JWTVerificationException exception){
             System.out.println(Arrays.toString(exception.getStackTrace()));
