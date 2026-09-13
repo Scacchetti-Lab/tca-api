@@ -1,6 +1,7 @@
-package com.api.tca.domain.meeting.entity;
+package com.api.tca.domain.client.entity;
 
 import com.api.tca.common.helpers.BrazilRealTime;
+import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.enums.PredictProcessStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,18 +12,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "meeting_predicts")
+@Table(name = "client_predicts")
 @Getter
 @Setter
 @NoArgsConstructor
-public class MeetingPredictEntity {
+public class ClientPredictEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @OneToOne
-    @JoinColumn(name = "meeting_id")
-    private MeetingEntity meeting;
+    @JoinColumn(name = "client_id")
+    private ClientEntity client;
 
     @Column(columnDefinition = "TEXT")
     private String predict;
@@ -34,8 +35,8 @@ public class MeetingPredictEntity {
 
     LocalDateTime created_at = BrazilRealTime.now();
 
-    public MeetingPredictEntity(MeetingEntity meeting) {
-        this.meeting = meeting;
+    public ClientPredictEntity(ClientEntity client) {
+        this.client = client;
         this.predict = "EM PROCESSAMENTO";
         this.status = PredictProcessStatus.CREATED;
         this.reprocess = false;

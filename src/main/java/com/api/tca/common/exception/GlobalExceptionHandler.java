@@ -1,6 +1,7 @@
 package com.api.tca.common.exception;
 
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
+import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.FailureResult;
 import com.api.tca.domain.chat.exception.InvalidTItleException;
@@ -44,6 +45,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleTranscriptProcessException(RuntimeException ex) {
         var serverResponse = new FailureResult<>(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(serverResponse);
+    }
+
+    @ExceptionHandler(FailOnPredictException.class)
+    public ResponseEntity<ApiResponse<?>> handlePredictConflict(RuntimeException ex) {
+        var serverResponse = new FailureResult<>(HttpStatus.CONFLICT, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(serverResponse);
     }
 
     @ExceptionHandler({

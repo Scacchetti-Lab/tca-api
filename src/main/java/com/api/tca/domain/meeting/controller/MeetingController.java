@@ -2,8 +2,10 @@ package com.api.tca.domain.meeting.controller;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
+import com.api.tca.common.model.dto.PredictRequestDto;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
+import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
 import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
@@ -137,7 +139,13 @@ public class MeetingController {
 
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable UUID meetingId) {
-        var updatedMeeting = meetingService.completeMeeting(meetingId);
+        var updatedMeeting = meetingService.cancelMeeting(meetingId);
         return ResponseEntity.ok(new SuccessResult<>("Reunião Cancelada", updatedMeeting));
+    }
+
+    @PostMapping("/predict")
+    public ResponseEntity<ApiResponse<MeetingPredictResponseDto>> predictNextClientMeetingBaseOnHistory(@RequestBody @Valid PredictRequestDto request) {
+        var predict = meetingService.predictFutureMeeting(request.entityId(), request.reprocess());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Previsão criada", predict));
     }
 }

@@ -1,6 +1,7 @@
 package com.api.tca.domain.meeting.repository;
 
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

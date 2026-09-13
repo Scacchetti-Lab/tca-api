@@ -2,11 +2,13 @@ package com.api.tca.domain.client.controller;
 
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
+import com.api.tca.common.model.dto.PredictRequestDto;
 import com.api.tca.domain.client.dto.analyse.ClientDetailedDto;
 import com.api.tca.domain.client.dto.client.ClientDescriptionDto;
 import com.api.tca.domain.client.dto.client.ClientSimplerDto;
 import com.api.tca.domain.client.dto.client.RegisterClientRequestDto;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
+import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
 import com.api.tca.domain.client.service.ClientService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,8 +67,9 @@ public class ClientController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{id}/predict")
-    public void predictClientBaseOnLastMeetings(@PathVariable UUID id) {
-        throw new RuntimeException("Not yet implemented");
+    @PostMapping("/predict")
+    public ResponseEntity<ApiResponse<ClientPredictResponseDto>> predictClientBaseOnLastMeetings(@RequestBody @Valid PredictRequestDto request) {
+        var predict = clientService.predictClientRelationship(request.entityId(), request.reprocess());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Previsão criada", predict));
     }
 }
