@@ -21,6 +21,7 @@ import com.api.tca.domain.meeting.enums.MeetingPriority;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
 import com.api.tca.domain.meeting.enums.MeetingUserSource;
 import com.api.tca.domain.meeting.enums.PredictProcessStatus;
+import com.api.tca.domain.meeting.exception.TranscriptAlreadyProcessedException;
 import com.api.tca.domain.meeting.exception.rules.*;
 import com.api.tca.domain.meeting.mapper.MeetingMapper;
 import com.api.tca.domain.meeting.repository.MeetingPredictRepository;
@@ -384,22 +385,34 @@ public class MeetingService {
     }
 
     public MeetingTranscriptBasicDto processTranscript(MeetingEntity meetingEntity, TranscriptFormDataDto request, ProfileTypes loggedIn) {
-        var addedTranscript = transcriptService.addEmptyTranscript(request);
+        var transcript = meetingEntity.getTranscript();
+
+        if (transcript != null && transcript.getStatus() != TranscriptStatus.ERROR) {
+            throw new TranscriptAlreadyProcessedException(
+                    "Esta reunião já possui uma transcrição em processamento ou concluída.");
+        }
+
+        if (transcript != null) {
+            transcript.setStatus(TranscriptStatus.NOT_STARTED);
+        } else {
+            var addedTranscript = transcriptService.addEmptyTranscript(request);
+            meetingEntity.setTranscript(addedTranscript);
+        }
+
         var transcriptDto = new TranscriptProcessRequestDto(
-                addedTranscript.getId(),
+                meetingEntity.getTranscript().getId(),
                 loggedIn,
                 new ClientContextRequestDto(
                         meetingEntity.getClient().getName(),
                         meetingEntity.getClient().getStatus(),
-                        lastMeetingsByClient(meetingEntity.getClient()))
-        );
-        meetingEntity.setTranscript(addedTranscript);
-        meetingRepository.save(meetingEntity);
+                        lastMeetingsByClient(meetingEntity.getClient())));
 
+        meetingRepository.save(meetingEntity);
         eventPublisher.publishEvent(new MeetingTranscriptProcessDto(meetingEntity.getId(), transcriptDto));
+
         return new MeetingTranscriptBasicDto(
-            new MeetingBasicDataDto(meetingEntity),
-            new TranscriptBasicDto(addedTranscript)
+                new MeetingBasicDataDto(meetingEntity),
+                new TranscriptBasicDto(meetingEntity.getTranscript())
         );
     }
 
