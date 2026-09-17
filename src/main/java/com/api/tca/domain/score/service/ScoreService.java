@@ -16,12 +16,18 @@ public class ScoreService {
     @Autowired
     private StrategicScoreService strategicPerformance;
 
-    public void calculateBaseScore(ClientEntity client) {
+    public void calculateStrategicBaseScore(ClientEntity client) {
         Set<MeetingEntity> meetings = client.getMeetings();
 
-        meetings.forEach(m -> {
-            performanceService.calculateBaseScore(m.getMeetingAnalysePerformance());
-            strategicPerformance.calculateBaseScore(m.getMeetingAnalyseStrategic());
+
+    }
+
+    public void calculatePerformanceBaseScore(MeetingEntity meetingToAnalyse) {
+        var sellers = meetingToAnalyse.getUsers()
+                .stream().filter(u -> u.getFirstProfileName().contains("Salesperson")).toList();
+
+        sellers.forEach(u -> {
+            performanceService.setUserScore(u, meetingToAnalyse.getMeetingAnalysePerformance());
         });
     }
 }
