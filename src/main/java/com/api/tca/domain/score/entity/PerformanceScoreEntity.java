@@ -37,8 +37,10 @@ public class PerformanceScoreEntity {
     @JdbcTypeCode(SqlTypes.NUMERIC)
     private BigDecimal multiplier;
 
+    @Enumerated(EnumType.STRING)
     private StreakType streakType;
 
+    @JdbcTypeCode(SqlTypes.SMALLINT)
     private Integer streakCount;
 
     @JdbcTypeCode(SqlTypes.NUMERIC)

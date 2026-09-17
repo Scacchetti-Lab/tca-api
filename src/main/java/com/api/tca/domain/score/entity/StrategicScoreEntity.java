@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table(name = "meeting_strategic_entity")
+@Table(name = "meeting_strategic_scores")
 @Entity
 @Getter
 @Setter
@@ -39,6 +39,7 @@ public class StrategicScoreEntity {
     @JdbcTypeCode(SqlTypes.NUMERIC)
     private BigDecimal walletPercentage;
 
+    @Enumerated(EnumType.STRING)
     private FinancialImpactLevel financialImpactLevel;
 
     @JdbcTypeCode(SqlTypes.NUMERIC)
