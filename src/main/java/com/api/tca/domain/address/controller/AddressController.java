@@ -3,6 +3,7 @@ package com.api.tca.domain.address.controller;
 import com.api.tca.domain.address.dto.AddressDto;
 import com.api.tca.domain.address.dto.AddressViaCepDto;
 import com.api.tca.domain.address.service.AddressService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ public class AddressController {
     @Autowired
     private AddressService addressService;
 
+    @SecurityRequirement(name = "bearer-key")
     @GetMapping
     public ResponseEntity<AddressDto> getAddress(@RequestParam("cep") String cep) {
         if (cep.isEmpty())
@@ -26,6 +28,7 @@ public class AddressController {
         return ResponseEntity.ok(new AddressDto(address));
     }
 
+    @SecurityRequirement(name = "bearer-key")
     @GetMapping("/{id}")
     public ResponseEntity<AddressDto> getAddress(@PathVariable UUID id) {
         var address = addressService.findAddressById(id);
@@ -39,6 +42,7 @@ public class AddressController {
         return ResponseEntity.ok(address);
     }
 
+    @SecurityRequirement(name = "bearer-key")
     @PostMapping
     public ResponseEntity<AddressDto> createAddress(@RequestBody @Valid AddressDto addressDto) {
         var data = addressService.createAddress(addressDto);

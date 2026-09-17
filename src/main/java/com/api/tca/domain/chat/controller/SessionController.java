@@ -1,6 +1,5 @@
 package com.api.tca.domain.chat.controller;
 
-import com.api.tca.common.ai.dto.request.chat.ChatBotProviderRequest;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.domain.chat.dto.request.ChatBotRequestDto;
@@ -12,6 +11,7 @@ import com.api.tca.domain.chat.dto.response.ChatSessionWithOutputDto;
 import com.api.tca.domain.chat.dto.response.MessageResponseDto;
 import com.api.tca.domain.chat.service.AISessionService;
 import com.api.tca.domain.user.service.TokenService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@SecurityRequirement(name = "bearer-key")
 @RestController
 @RequestMapping("chat")
 public class SessionController {

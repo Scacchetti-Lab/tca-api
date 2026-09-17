@@ -32,7 +32,6 @@ public record RegisterRequestDto(
 
         @NotBlank
         @Email
-        @Pattern(regexp = ".+@totvs\\.com$", message = "Deve ser um e-mail TOTVS")
         String email,
 
         @NotBlank(message = "Senha é obrigatória")

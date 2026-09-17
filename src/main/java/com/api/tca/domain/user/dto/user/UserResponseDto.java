@@ -2,11 +2,13 @@ package com.api.tca.domain.user.dto.user;
 
 import com.api.tca.domain.address.dto.AddressDto;
 import com.api.tca.domain.user.entity.UserEntity;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 public record UserResponseDto(
+        UUID id,
         String fullName,
         LocalDate birthDate,
         String userName,
@@ -21,6 +23,7 @@ public record UserResponseDto(
 
     public UserResponseDto(UserEntity user) {
         this(
+            user.getId(),
             user.getFullName(),
             user.getBirthDate(),
             user.getUsername(),
