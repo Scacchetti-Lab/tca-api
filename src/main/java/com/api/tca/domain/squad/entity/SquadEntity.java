@@ -40,6 +40,6 @@ public class SquadEntity {
     @OneToMany(mappedBy = "squad", fetch = FetchType.LAZY)
     private Set<ClientEntity> clients;
 
-    @OneToMany(mappedBy = "squad")
+    @OneToMany(mappedBy = "squad", fetch = FetchType.LAZY)
     private Set<SalespersonEntity> salespersons;
 }

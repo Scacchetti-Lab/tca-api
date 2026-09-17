@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record RegisterRequestDto(
         @NotBlank(message = "Nome é obrigatório")
@@ -41,6 +42,12 @@ public record RegisterRequestDto(
 
         @NotNull(message = "Endereço é obrigatório")
         @Valid
-        AddressDto address
+        AddressDto address,
+
+        @NotBlank
+        @Pattern(regexp = "TCA-SQD-[0-9]+")
+        String squadCode,
+
+        String createdByUsername
 ) {
 }

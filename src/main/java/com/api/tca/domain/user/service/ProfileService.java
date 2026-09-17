@@ -21,4 +21,14 @@ public class ProfileService {
             throw new ProfileNotFound("Perfil não encontrado");
         return profile;
     }
+
+
+    public boolean isSalesPerson(ProfileEntity profile) {
+        return profile.getName().contains("Salesperson");
+    }
+
+    public boolean isManager(ProfileEntity profile) {
+        String name = profile.getName();
+        return name.contains("Manager") || name.contains("Director");
+    }
 }

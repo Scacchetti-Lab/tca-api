@@ -4,6 +4,7 @@ import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.chat.entity.AiSessionEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.salesperson.entity.SalespersonEntity;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.service.UserService;
@@ -76,7 +77,9 @@ public class UserEntity {
     private Boolean useMfa;
     private String mfaToken;
 
-    private UUID createdBy;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = true)
+    private UserEntity createdBy;
 
     @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
     private Set<MeetingEntity> meetings;
@@ -84,7 +87,10 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<AiSessionEntity> sessions;
 
-    public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address) {
+    @OneToOne(mappedBy = "user")
+    private SalespersonEntity salesperson;
+
+    public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address, UserEntity ownerUser) {
         this.fullName = dto.fullName();
         this.username = UserService.createUserName(dto.fullName());
         this.address = address;
@@ -101,10 +107,7 @@ public class UserEntity {
         this.status = UserStatus.FIRST_LOGIN;
         this.createdOn = BrazilRealTime.now();
         this.modifiedOn = BrazilRealTime.now();
-    }
-
-    public void addProfile(ProfileEntity profile) {
-        this.profiles.add(profile);
+        this.createdBy = ownerUser;
     }
 
     public String getFirstProfileName() {
