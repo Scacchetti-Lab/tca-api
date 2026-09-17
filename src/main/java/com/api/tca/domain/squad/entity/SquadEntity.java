@@ -1,6 +1,7 @@
 package com.api.tca.domain.squad.entity;
 
 import com.api.tca.domain.client.entity.ClientEntity;
+import com.api.tca.domain.salesperson.entity.SalespersonEntity;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -38,4 +39,7 @@ public class SquadEntity {
 
     @OneToMany(mappedBy = "squad", fetch = FetchType.LAZY)
     private Set<ClientEntity> clients;
+
+    @OneToMany(mappedBy = "squad")
+    private Set<SalespersonEntity> salespersons;
 }

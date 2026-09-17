@@ -6,6 +6,8 @@ import com.api.tca.domain.meeting.dto.request.MinimalRegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.RegisterMeetingDto;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
+import com.api.tca.domain.score.entity.PerformanceScoreEntity;
+import com.api.tca.domain.score.entity.StrategicScoreEntity;
 import com.api.tca.domain.transcript.entity.TranscriptEntity;
 import com.api.tca.domain.user.entity.UserEntity;
 import jakarta.persistence.*;
@@ -80,6 +82,12 @@ public class MeetingEntity {
 
     @OneToOne(mappedBy = "meeting")
     private MeetingPredictEntity meetingPredict;
+
+    @OneToOne(mappedBy = "meeting")
+    private StrategicScoreEntity strategicScore;
+
+    @OneToOne(mappedBy = "meeting")
+    private PerformanceScoreEntity performanceScore;
 
     public MeetingEntity(RegisterMeetingDto dto) {
         this.title = dto.title();

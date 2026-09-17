@@ -4,6 +4,7 @@ import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.client.enums.ClientStatus;
 import com.api.tca.domain.meeting.entity.MeetingAnalyseStrategicEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.score.entity.StrategicScoreEntity;
 import com.api.tca.domain.squad.entity.SquadEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,4 +59,7 @@ public class ClientEntity {
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private Set<MeetingAnalyseStrategicEntity> strategicAnalyses;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private Set<StrategicScoreEntity> strategicScores;
 }
