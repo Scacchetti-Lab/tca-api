@@ -151,4 +151,11 @@ public class MeetingController {
         var predict = meetingService.predictFutureMeeting(request.entityId(), request.reprocess());
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Previsão criada", predict));
     }
+
+    @PostMapping("/{id}/score")
+    public ResponseEntity<ApiResponse<String>> setScorePoints(@PathVariable UUID id) {
+        meetingService.updateMeetingScores(id);
+        // TODO: DTO para retorno de scores
+        return ResponseEntity.ok(new SuccessResult<>(null, "Score recalculado"));
+    }
 }

@@ -12,9 +12,6 @@ import java.util.Set;
 @Service
 public class StrategicScoreService {
 
-    @Autowired
-    private MeetingService meetingService;
-
     public void calculateBaseScore(MeetingAnalyseStrategicEntity strategic) {
 
     }

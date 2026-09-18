@@ -2,6 +2,7 @@ package com.api.tca.domain.score.service;
 
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
+import com.api.tca.domain.meeting.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,18 +17,19 @@ public class ScoreService {
     @Autowired
     private StrategicScoreService strategicPerformance;
 
-    public void calculateStrategicBaseScore(ClientEntity client) {
+    public void saveScorePoints(MeetingService meetingService, MeetingEntity meeting, ClientEntity client) {
+        //calculateStrategicBaseScore(client);
+        calculatePerformanceBaseScore(meetingService, meeting);
+    }
+
+
+    private void calculateStrategicBaseScore(ClientEntity client) {
         Set<MeetingEntity> meetings = client.getMeetings();
 
 
     }
 
-    public void calculatePerformanceBaseScore(MeetingEntity meetingToAnalyse) {
-        var sellers = meetingToAnalyse.getUsers()
-                .stream().filter(u -> u.getFirstProfileName().contains("Salesperson")).toList();
-
-        sellers.forEach(u -> {
-            performanceService.setScorePoints(meetingToAnalyse);
-        });
+    private void calculatePerformanceBaseScore(MeetingService meetingService, MeetingEntity meetingToAnalyse) {
+        performanceService.setScorePoints(meetingService, meetingToAnalyse);
     }
 }

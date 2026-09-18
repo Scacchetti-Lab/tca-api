@@ -20,8 +20,8 @@ public class MeetingStrategicService {
     private MeetingRepository meetingRepository;
 
     @Transactional
-    public void addMeetingStrategicAnalysed(MeetingEntity meeting, StrategicAnalyseDto analyseDto) {
-        var strategicEntity = new MeetingAnalyseStrategicEntity(meeting, analyseDto);
-        repository.save(strategicEntity);
+    public MeetingAnalyseStrategicEntity addMeetingStrategicAnalysed(MeetingEntity meeting, StrategicAnalyseDto analyseDto) {
+        MeetingAnalyseStrategicEntity strategicEntity = new MeetingAnalyseStrategicEntity(meeting, analyseDto);
+        return repository.save(strategicEntity);
     }
 }

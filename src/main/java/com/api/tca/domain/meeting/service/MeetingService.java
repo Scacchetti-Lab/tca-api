@@ -30,6 +30,7 @@ import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
 import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
 import com.api.tca.domain.meeting.validations.predict.MeetingPredictValidation;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
+import com.api.tca.domain.score.service.ScoreService;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
@@ -86,6 +87,9 @@ public class MeetingService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ScoreService scoreService;
 
     @Autowired
     private List<StakeholderValidate> shValidator;
@@ -283,7 +287,7 @@ public class MeetingService {
         }
 
         if (!systemFilteredStakeholders.isEmpty()) {
-            Set<UserEntity> users = new java.util.HashSet<>(Set.of());
+            Set<UserEntity> users = new java.util.HashSet<>(meeting.getUsers());
             for (StakeholderRegisterDto stakeholder : systemFilteredStakeholders) {
                 var user = userRepository.findByIsDeletedFalseAndUsernameOrIsDeletedFalseAndEmail(stakeholder.userName(), stakeholder.email())
                         .orElse(null);
@@ -341,14 +345,24 @@ public class MeetingService {
 
         addStakeholdersToTheMeeting(meeting.getId(), stakeholdersList, true);
 
-        meeting.setPriority(setMeetingPriority(
-                performance.insights().priority(),
-                strategic.insights().priority())
-        );
+        meeting.setPriority(setMeetingPriority(performance.insights().priority(), strategic.insights().priority()));
+        meeting.setRating((performance.insights().rating() + strategic.insights().rating()) / 2);
 
-        performanceService.addMeetingPerformanceAnalysed(meeting, performance);
-        strategicService.addMeetingStrategicAnalysed(meeting, strategic);
-        meetingRepository.save(meeting);
+        var perfEntity = performanceService.addMeetingPerformanceAnalysed(meeting, performance);
+        var stratEntity = strategicService.addMeetingStrategicAnalysed(meeting, strategic);
+        var savedMeeting = meetingRepository.save(meeting);
+
+        savedMeeting.setMeetingAnalysePerformance(perfEntity);
+        savedMeeting.setMeetingAnalyseStrategic(stratEntity);
+        scoreService.saveScorePoints(this, savedMeeting, client);
+    }
+
+    @Transactional
+    public void updateMeetingScores(UUID meetingId) {
+        var meeting = getMeetingEntityById(meetingId);
+        var client = meeting.getClient();
+
+        scoreService.saveScorePoints(this, meeting, client);
     }
 
     @Transactional

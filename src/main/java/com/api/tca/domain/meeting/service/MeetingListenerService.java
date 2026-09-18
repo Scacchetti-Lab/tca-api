@@ -90,10 +90,4 @@ public class MeetingListenerService {
             meetingService.updatePredictStatus(event.entityId(), PredictProcessStatus.CANCELLED);
         }
     }
-
-    @Async
-    @EventListener
-    public void onMeetingSetPerformanceScore(MeetingEntity entity) {
-        performanceService.setScorePoints(entity);
-    }
 }

@@ -17,8 +17,8 @@ public class MeetingPerformanceService {
     @Autowired
     private MeetingRepository meetingRepository;
 
-    public void addMeetingPerformanceAnalysed(MeetingEntity meeting, PerformanceAnalyseDto perfDto) {
+    public MeetingAnalysePerformanceEntity addMeetingPerformanceAnalysed(MeetingEntity meeting, PerformanceAnalyseDto perfDto) {
         MeetingAnalysePerformanceEntity performanceEntity = new MeetingAnalysePerformanceEntity(meeting, perfDto);
-        repository.save(performanceEntity);
+        return repository.save(performanceEntity);
     }
 }
