@@ -27,7 +27,7 @@ public class ScoreService {
                 .stream().filter(u -> u.getFirstProfileName().contains("Salesperson")).toList();
 
         sellers.forEach(u -> {
-            performanceService.setUserScore(u, meetingToAnalyse.getMeetingAnalysePerformance());
+            performanceService.setScorePoints(meetingToAnalyse);
         });
     }
 }

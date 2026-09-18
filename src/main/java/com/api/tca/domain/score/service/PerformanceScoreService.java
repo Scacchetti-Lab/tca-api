@@ -3,16 +3,15 @@ package com.api.tca.domain.score.service;
 import com.api.tca.domain.meeting.entity.MeetingAnalysePerformanceEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.service.MeetingService;
-import com.api.tca.domain.salesperson.entity.SalespersonEntity;
 import com.api.tca.domain.salesperson.service.SalespersonService;
 import com.api.tca.domain.score.dto.serviceParams.PerformancePointsDto;
 import com.api.tca.domain.score.entity.PerformanceScoreEntity;
 import com.api.tca.domain.score.enums.StreakType;
 import com.api.tca.domain.score.interfaces.ScoreImplements;
 import com.api.tca.domain.score.repository.PerformanceScoreRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,9 @@ public class PerformanceScoreService implements ScoreImplements {
     @Autowired
     private SalespersonService salespersonService;
 
+
     @Override
+    @Transactional
     public void setScorePoints(MeetingEntity entity) {
         int baseScore = calculateBaseScore(entity.getMeetingAnalysePerformance());
         var sellers = entity.getUsers().stream().filter(u -> u.getFirstProfileName().contains("Salesperson")).toList();
@@ -41,31 +42,57 @@ public class PerformanceScoreService implements ScoreImplements {
             var sellerEntity = salespersonService.findByUserId(seller.getId());
             var lastPerformanceScores = getLastMeetingScores(seller.getId());
             if (lastPerformanceScores.isEmpty()) {
+                var finalScore = calculateFinalScore(baseScore, 1.0);
                 var scoreEntity = new PerformanceScoreEntity(
                     entity, sellerEntity,
                     BigDecimal.valueOf(baseScore), BigDecimal.valueOf(1),
-                    StreakType.STABLE, 1, null // finalscore
+                    StreakType.STABLE, 1, finalScore
                 );
+                performances.add(scoreEntity);
+                return;
             }
             var mostRecentAnalysis = lastPerformanceScores.getFirst();
             StreakType streakType = setStreakTypeByHistory(baseScore, mostRecentAnalysis.getBaseScore().intValue());
-            int streakVal = 1;
+            int streakVal;
             if (streakType == StreakType.STABLE) streakVal = 0;
             else streakVal = setStreakVal(lastPerformanceScores, streakType);
+            Double multi = calculateMultiplier(lastPerformanceScores, mostRecentAnalysis.getMultiplier().doubleValue());
 
+            var finalScore = calculateFinalScore(baseScore, multi);
 
             performances.add(new PerformanceScoreEntity(
                     entity,
                     sellerEntity,
                     BigDecimal.valueOf(baseScore),
-                    null, // multiplicador
+                    BigDecimal.valueOf(multi),
                     streakType,
                     streakVal,
-                    null // final score
+                    finalScore
             ));
         });
-
         scoreRepository.saveAll(performances);
+    }
+
+    private Double calculateMultiplier(List<PerformanceScoreEntity> performances, Double currentMulti) {
+        double multi = 1.0;
+        if (currentMulti != null) multi = currentMulti;
+
+        var highStreak = performances.stream().filter(p -> p.getStreakType() == StreakType.HIGH).count();
+        var fallStreak = performances.stream().filter(p -> p.getStreakType() == StreakType.FALL).count();
+
+        if (highStreak > 0)
+            multi += 0.1 * highStreak;
+
+        if (fallStreak > 0)
+            multi -= 0.1 * fallStreak;
+
+        if (multi > 2)
+            multi = 2;
+
+        if (multi < 0.5)
+            multi = 0.5;
+
+        return multi;
     }
 
     private int setStreakVal(List<PerformanceScoreEntity> analyses, StreakType newStreak) {
@@ -74,7 +101,7 @@ public class PerformanceScoreService implements ScoreImplements {
         );
         lastStreaks.add(newStreak);
 
-        int streak = 1; // o proprio newStreak ja conta como 1
+        int streak = 1;
         for (int i = lastStreaks.size() - 1; i > 0; i--) {
             if (lastStreaks.get(i) == lastStreaks.get(i - 1))
                 streak++;
@@ -100,7 +127,7 @@ public class PerformanceScoreService implements ScoreImplements {
 
     @Override
     public BigDecimal calculateFinalScore(Integer baseScore, Double multi) {
-        double result = baseScore + (baseScore * multi);
+        double result = baseScore + (baseScore * (multi - 1.0));
         return BigDecimal.valueOf(result);
     }
 
@@ -112,5 +139,4 @@ public class PerformanceScoreService implements ScoreImplements {
         Collections.reverse(performances);
         return performances;
     }
-
 }
