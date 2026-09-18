@@ -1,10 +1,12 @@
 package com.api.tca.domain.score.entity;
 
+import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.salesperson.entity.SalespersonEntity;
 import com.api.tca.domain.score.enums.StreakType;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @Table(name = "meeting_performance_scores")
 @Getter
 @Setter
+@NoArgsConstructor
 public class PerformanceScoreEntity {
 
     @Id
@@ -47,4 +50,18 @@ public class PerformanceScoreEntity {
     private BigDecimal finalScore;
 
     private LocalDateTime calculated_at;
+
+    public PerformanceScoreEntity(MeetingEntity meeting, SalespersonEntity seller,
+                                  BigDecimal baseScore, BigDecimal multiplier, StreakType streakType,
+                                  Integer streakCount, BigDecimal finalScore)
+    {
+        this.meeting = meeting;
+        this.salesperson = seller;
+        this.baseScore = baseScore;
+        this.multiplier = multiplier;
+        this.streakType = streakType;
+        this.streakCount = streakCount;
+        this.finalScore = finalScore;
+        this.calculated_at = BrazilRealTime.now();
+    }
 }

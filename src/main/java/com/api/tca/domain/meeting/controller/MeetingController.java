@@ -92,7 +92,8 @@ public class MeetingController {
 
     @GetMapping("/user/{id}")
     public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetingsByUser(@PathVariable UUID id, Pageable pageable) {
-        var data = meetingService.getAllMeetingByUserId(id, pageable);
+        var entities = meetingService.getAllMeetingByUserId(id, pageable);
+        var data = entities.map(MeetingBasicDataDto::new);
         return ResponseEntity.ok(new SuccessResult<>(data.stream().count() + " reuniões encontrada", data));
     }
 

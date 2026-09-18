@@ -7,15 +7,15 @@ import com.api.tca.common.ai.provider.MeetingAnalyseProvider;
 import com.api.tca.common.ai.provider.TranscriptProvider;
 import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
-import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
 import com.api.tca.domain.meeting.enums.PredictProcessStatus;
+import com.api.tca.domain.score.service.PerformanceScoreService;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
 import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.transcript.service.TranscriptService;
-import jakarta.transaction.Transactional;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -40,6 +40,9 @@ public class MeetingListenerService {
 
     @Autowired
     private TranscriptService transcriptService;
+
+    @Autowired
+    private PerformanceScoreService performanceService;
 
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
@@ -69,8 +72,6 @@ public class MeetingListenerService {
         meetingProvider.createEmbeds(meetingId);
     }
 
-    // TODO: Método para excluir todas as referências de transcrição caso ocorra algum erro
-
     @Async
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void onMeetingPredictCreated(PredictEventRequestDto event) {
@@ -88,5 +89,11 @@ public class MeetingListenerService {
             log.error("Falha ao processar predição {}", event.entityId(), ex);
             meetingService.updatePredictStatus(event.entityId(), PredictProcessStatus.CANCELLED);
         }
+    }
+
+    @Async
+    @EventListener
+    public void onMeetingSetPerformanceScore(MeetingEntity entity) {
+        performanceService.setScorePoints(entity);
     }
 }

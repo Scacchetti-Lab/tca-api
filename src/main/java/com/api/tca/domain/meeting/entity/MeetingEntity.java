@@ -4,6 +4,7 @@ import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.meeting.dto.request.MinimalRegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.RegisterMeetingDto;
+import com.api.tca.domain.meeting.dto.response.MeetingBasicDataDto;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
 import com.api.tca.domain.score.entity.PerformanceScoreEntity;

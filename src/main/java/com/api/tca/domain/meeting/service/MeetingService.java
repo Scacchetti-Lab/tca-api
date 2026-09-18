@@ -102,8 +102,8 @@ public class MeetingService {
         return data;
     }
 
-    public Page<MeetingBasicDataDto> getAllMeetingByUserId(UUID id, Pageable pageable) {
-        var data = meetingRepository.findAllByUserIdAndIsDeletedFalse(pageable, id).map(MeetingBasicDataDto::new);
+    public Page<MeetingEntity> getAllMeetingByUserId(UUID id, Pageable pageable) {
+        var data = meetingRepository.findAllByUserIdAndIsDeletedFalse(pageable, id);
         if (data.isEmpty()) throw new MeetingNotFoundException("Nenhuma reunião encontrada");
         return data;
     }
