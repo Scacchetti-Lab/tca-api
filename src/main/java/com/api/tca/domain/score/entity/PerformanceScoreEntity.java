@@ -26,7 +26,7 @@ public class PerformanceScoreEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
     private MeetingEntity meeting;
 
@@ -63,5 +63,18 @@ public class PerformanceScoreEntity {
         this.streakCount = streakCount;
         this.finalScore = finalScore;
         this.calculated_at = BrazilRealTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("""
+                Reunião: %s
+                Vendedor: %s
+                Score base: %.2f
+                Multiplier: %.2f
+                StreakType: %s
+                StreakCount: %d
+                FinalScore: %.2f
+                """, this.meeting.getTitle(), this.salesperson.getUser().getFullName(), this.baseScore, this.multiplier, this.streakType, this.streakCount, this.finalScore);
     }
 }

@@ -16,6 +16,9 @@ import java.util.Set;
 public record MinimalRegisterMeetingDto(
     String totvsId,
 
+    @NotBlank
+    String title,
+
     @NotNull
     @PastOrPresent
     LocalDateTime scheduledAt,

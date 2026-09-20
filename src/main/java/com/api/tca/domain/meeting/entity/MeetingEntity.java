@@ -20,6 +20,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -87,8 +88,8 @@ public class MeetingEntity {
     @OneToOne(mappedBy = "meeting")
     private StrategicScoreEntity strategicScore;
 
-    @OneToOne(mappedBy = "meeting")
-    private PerformanceScoreEntity performanceScore;
+    @OneToMany(mappedBy = "meeting", fetch = FetchType.LAZY)
+    private Set<PerformanceScoreEntity> performanceScores;
 
     public MeetingEntity(RegisterMeetingDto dto) {
         this.title = dto.title();
@@ -105,7 +106,7 @@ public class MeetingEntity {
     }
 
     public MeetingEntity(MinimalRegisterMeetingDto dto) {
-        this.title = "Reunião TOTVS";
+        this.title = dto.title();
         this.totvsId = dto.totvsId();
         this.scheduled = BrazilRealTime.cast(dto.scheduledAt());
         this.clientRepresent = dto.clientRepresent();
@@ -119,10 +120,5 @@ public class MeetingEntity {
     public void removeEmployee(UserEntity user) {
         this.users.remove(user);
         user.getMeetings().remove(this);
-    }
-
-    public void addMultiplesEmployee(Set<UserEntity> users) {
-        this.users.addAll(users);
-        users.forEach(u -> u.getMeetings().add(this));
     }
 }

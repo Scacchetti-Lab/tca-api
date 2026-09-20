@@ -287,7 +287,8 @@ public class MeetingService {
         }
 
         if (!systemFilteredStakeholders.isEmpty()) {
-            Set<UserEntity> users = new java.util.HashSet<>(meeting.getUsers());
+            Set<UserEntity> defaultList = meeting.getUsers() == null ? Set.of() : meeting.getUsers();
+            Set<UserEntity> users = new java.util.HashSet<>(defaultList);
             for (StakeholderRegisterDto stakeholder : systemFilteredStakeholders) {
                 var user = userRepository.findByIsDeletedFalseAndUsernameOrIsDeletedFalseAndEmail(stakeholder.userName(), stakeholder.email())
                         .orElse(null);

@@ -58,7 +58,7 @@ public class MeetingController {
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada", data));
     }
 
-    @PostMapping(value = "/new-analyse")
+    @PostMapping("/new-analyse")
     public ResponseEntity<ApiResponse<MeetingTranscriptBasicDto>> addMeetingTranscript(
             @RequestBody @Valid MinimalRegisterMeetingDto request,
             UriComponentsBuilder uriBuilder)
