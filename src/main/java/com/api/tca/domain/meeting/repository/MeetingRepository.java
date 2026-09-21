@@ -17,6 +17,9 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
     Page<MeetingEntity> findAllByIsDeletedFalse(Pageable pageable);
     Optional<MeetingEntity> findByIdAndIsDeletedFalse(UUID id);
 
+    @Query("SELECT m FROM MeetingEntity m JOIN FETCH m.client WHERE m.id = :id AND m.isDeleted = false")
+    Optional<MeetingEntity> findByIdWithClient(UUID id);
+
     @Query("SELECT m FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId AND m.isDeleted = false")
     Page<MeetingEntity> findAllByUserIdAndIsDeletedFalse(Pageable pageable, UUID userId);
 

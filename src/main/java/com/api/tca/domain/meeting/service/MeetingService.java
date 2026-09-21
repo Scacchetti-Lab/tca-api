@@ -11,6 +11,8 @@ import com.api.tca.domain.client.dto.client.UpdateClientDto;
 import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
+import com.api.tca.domain.email.dto.email.EmailRequestDto;
+import com.api.tca.domain.email.service.EmailService;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
 import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
@@ -49,9 +51,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -90,6 +92,9 @@ public class MeetingService {
 
     @Autowired
     private ScoreService scoreService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private List<StakeholderValidate> shValidator;
@@ -135,12 +140,18 @@ public class MeetingService {
                 .orElseThrow(() -> new MeetingNotFoundException("Reunião não encontrada"));
     }
 
+    public MeetingEntity getMeetingEntityFetchClientById(UUID id) {
+        return meetingRepository.findByIdWithClient(id)
+                .orElseThrow(() -> new MeetingNotFoundException("Reunião não encontrada"));
+    }
+
     public MeetingDetailedDto getMeetingDetailedDtoById(UUID id) {
         var entity = getMeetingEntityById(id);
         var stakeHolders = findStakeholdersByMeetingId(entity.getId());
 
         return new MeetingDetailedDto(entity, stakeHolders);
     }
+
 
     public MeetingPredictEntity getPredictByMeetingId(UUID id) {
         return predictRepository.findByMeetingId(id).orElseThrow(() -> new MeetingNotFoundException("Previsão não encontrada"));
@@ -231,12 +242,12 @@ public class MeetingService {
         mtValidator.forEach(v -> v.validate(entity));
 
         var result = meetingRepository.save(entity);
-        eventPublisher.publishEvent(new MeetingTranscriptProcessDto(entity.getId(), null));
+        eventPublisher.publishEvent(new MeetingTranscriptProcessDto(entity.getId(), null, null));
         return new MeetingBasicDataDto(result);
     }
 
     @Transactional
-    public MeetingTranscriptBasicDto createAndAnalyseMeetingByRequest(MinimalRegisterMeetingDto request, ProfileTypes userProfile) {
+    public MeetingTranscriptBasicDto createAndAnalyseMeetingByRequest(MinimalRegisterMeetingDto request, ProfileTypes userProfile, String userEmailSolicited) {
         if (meetingRepository.existsMeetingsByTotvsIdAndIsDeletedFalse(request.totvsId()))
             throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
 
@@ -249,13 +260,13 @@ public class MeetingService {
         if (!request.employees().isEmpty())
             addStakeholdersToTheMeeting(savedEntity.getId(), request.employees(), false);
 
-        return processTranscript(savedEntity, request.transcriptData(), userProfile);
+        return processTranscript(savedEntity, request.transcriptData(), userProfile, userEmailSolicited);
     }
 
     @Transactional
-    public MeetingTranscriptBasicDto findAndAnalyseMeetingById(UUID id, TranscriptFormDataDto request, ProfileTypes userProfile) {
+    public MeetingTranscriptBasicDto findAndAnalyseMeetingById(UUID id, TranscriptFormDataDto request, ProfileTypes userProfile, String userEmailSolicited) {
         MeetingEntity meeting = getMeetingEntityById(id);
-        return processTranscript(meeting, request, userProfile);
+        return processTranscript(meeting, request, userProfile, userEmailSolicited);
     }
 
     @Transactional
@@ -399,8 +410,9 @@ public class MeetingService {
         return perfPriority;
     }
 
-    public MeetingTranscriptBasicDto processTranscript(MeetingEntity meetingEntity, TranscriptFormDataDto request, ProfileTypes loggedIn) {
+    public MeetingTranscriptBasicDto processTranscript(MeetingEntity meetingEntity, TranscriptFormDataDto request, ProfileTypes loggedIn, String userEmail) {
         var transcript = meetingEntity.getTranscript();
+        var solicitedUser = userRepository.findUserByEmailAndIsDeletedFalse(userEmail);
 
         if (transcript != null && transcript.getStatus() != TranscriptStatus.ERROR) {
             throw new TranscriptAlreadyProcessedException(
@@ -423,7 +435,7 @@ public class MeetingService {
                         lastMeetingsByClient(meetingEntity.getClient())));
 
         meetingRepository.save(meetingEntity);
-        eventPublisher.publishEvent(new MeetingTranscriptProcessDto(meetingEntity.getId(), transcriptDto));
+        eventPublisher.publishEvent(new MeetingTranscriptProcessDto(meetingEntity.getId(), transcriptDto, solicitedUser));
 
         return new MeetingTranscriptBasicDto(
                 new MeetingBasicDataDto(meetingEntity),
@@ -467,5 +479,32 @@ public class MeetingService {
         predictEntity.setReprocess(reprocess);
         predictEntity.setPredict(predict);
         predictRepository.save(predictEntity);
+    }
+
+    private Map<String, String> buildCommonReplacements(UserEntity user, MeetingEntity meetingEntity) {
+        var client = meetingEntity.getClient();
+        Map<String, String> bodyReplace = new HashMap<>();
+        bodyReplace.put("{{user_first_name}}", user.getFullName());
+        bodyReplace.put("{{meeting_title}}", meetingEntity.getTitle());
+        bodyReplace.put("{{client_name}}", client.getName());
+        bodyReplace.put("{{meeting_date}}", meetingEntity.getScheduled().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        bodyReplace.put("{{current_year}}", String.valueOf(LocalDateTime.now().getYear()));
+        return bodyReplace;
+    }
+
+    public void sendConfirmProcessEmail(UserEntity user, MeetingEntity meetingEntity) {
+        var bodyReplace = buildCommonReplacements(user, meetingEntity);
+        bodyReplace.put("{{meeting_analysis_url}}", "https://tca.totvs.com.br/dashboard/meetings");
+
+        var hosts = new EmailRequestDto(null, user.getEmail());
+        emailService.sendEmail("Análise de transcrição concluída", bodyReplace, hosts, user.getFullName());
+    }
+
+    public void sendProcessFailEmail(UserEntity user, MeetingEntity meetingEntity) {
+        var bodyReplace = buildCommonReplacements(user, meetingEntity);
+        bodyReplace.put("{{meeting_retry_url}}", "https://tca.totvs.com.br/dashboard/meetings");
+
+        var hosts = new EmailRequestDto(null, user.getEmail());
+        emailService.sendEmail("Falha no processamento de transcrição", bodyReplace, hosts, user.getFullName());
     }
 }

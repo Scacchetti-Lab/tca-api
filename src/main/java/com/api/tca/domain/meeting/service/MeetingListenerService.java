@@ -12,6 +12,7 @@ import com.api.tca.domain.score.service.PerformanceScoreService;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
 import com.api.tca.domain.transcript.exceptions.TranscriptProcessErrorException;
 import com.api.tca.domain.transcript.service.TranscriptService;
+import com.api.tca.domain.user.entity.UserEntity;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -57,12 +58,14 @@ public class MeetingListenerService {
             meetingService.saveAnalyses(event.meetingId(), process.content());
             transcriptProvider.generateEmbedChunks(new TranscriptEmbeddingDto(transcriptRequest.transcriptId()));
             transcriptService.updateStatus(transcriptRequest.transcriptId(), TranscriptStatus.DONE);
-
             meetingProvider.createEmbeds(event.meetingId());
+
+            if (event.user() != null) sendEmail(event.user(), event.meetingId(), false);
         } catch (Exception ex) {
             if (transcriptRequest != null) log.error("Falha ao processar transcrição {}", transcriptRequest.transcriptId(), ex);
             else log.error("Falha ao processar transcrição", ex);
             transcriptService.updateStatus(transcriptRequest.transcriptId(), TranscriptStatus.ERROR);
+            if (event.user() != null) sendEmail(event.user(), event.meetingId(), true);
         }
     }
 
@@ -89,5 +92,12 @@ public class MeetingListenerService {
             log.error("Falha ao processar predição {}", event.entityId(), ex);
             meetingService.updatePredictStatus(event.entityId(), PredictProcessStatus.CANCELLED);
         }
+    }
+
+
+    public void sendEmail(UserEntity user, UUID meetingId, boolean failOnProcess) {
+        var meeting = meetingService.getMeetingEntityFetchClientById(meetingId);
+        if (failOnProcess) meetingService.sendProcessFailEmail(user, meeting);
+        else meetingService.sendConfirmProcessEmail(user, meeting);
     }
 }

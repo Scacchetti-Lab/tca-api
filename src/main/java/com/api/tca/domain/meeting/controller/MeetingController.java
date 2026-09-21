@@ -1,5 +1,6 @@
 package com.api.tca.domain.meeting.controller;
 
+import com.api.tca.common.helpers.ProfileTypeByLabel;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.common.model.dto.PredictRequestDto;
@@ -10,7 +11,9 @@ import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.user.enums.ProfileTypes;
+import com.api.tca.domain.user.service.TokenService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +35,9 @@ public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
+
+    @Autowired
+    private TokenService tokenService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetings(@PageableDefault(size = 5) Pageable pageable) {
@@ -60,21 +66,24 @@ public class MeetingController {
 
     @PostMapping("/new-analyse")
     public ResponseEntity<ApiResponse<MeetingTranscriptBasicDto>> addMeetingTranscript(
+            HttpServletRequest httpRequest,
             @RequestBody @Valid MinimalRegisterMeetingDto request,
             UriComponentsBuilder uriBuilder)
     {
-        // TODO: Ao obter JWT, pegar o profiletype atual do usuário
-        var data = meetingService.createAndAnalyseMeetingByRequest(request, ProfileTypes.DIRECTOR);
+        var tokenData = tokenService.getAuthenticatedUser(httpRequest);
+        var data = meetingService.createAndAnalyseMeetingByRequest(request, ProfileTypeByLabel.get(tokenData.profile()), tokenData.email());
         URI meetingUri = uriBuilder.path("/meeting/{id}").buildAndExpand(data.meeting().id()).toUri();
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada e transcrição em processamento", data));
     }
 
     @PutMapping("/{id}/analyse")
     public ResponseEntity<ApiResponse<MeetingTranscriptBasicDto>> analyseTranscriptMeetingById(
+            HttpServletRequest httpRequest,
             @PathVariable UUID id,
             @RequestBody @Valid TranscriptFormDataDto request) {
-        // TODO: Ao obter JWT, pegar o profiletype atual do usuário
-        var data = meetingService.findAndAnalyseMeetingById(id, request, ProfileTypes.DIRECTOR);
+
+        var tokenData = tokenService.getAuthenticatedUser(httpRequest);
+        var data = meetingService.findAndAnalyseMeetingById(id, request, ProfileTypeByLabel.get(tokenData.profile()), tokenData.email());
         return ResponseEntity.ok(new SuccessResult<>("Transcrição em Processamento", data));
     }
 
