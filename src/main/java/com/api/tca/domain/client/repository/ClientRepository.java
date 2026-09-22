@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,4 +34,7 @@ public interface ClientRepository extends JpaRepository<ClientEntity, UUID> {
     Optional<ClientDetailedDto> findClientWithAnalysis(@Param("clientId") UUID clientId);
 
     Page<ClientEntity> findAllClientsByIsDeletedFalse(Pageable pageable);
+
+    @Query("SELECT SUM(c.revenue) FROM ClientEntity c WHERE c.squad.id = :squadId")
+    BigDecimal sumRevenueBySquadId(@Param("squadId") UUID squadId);
 }

@@ -85,8 +85,8 @@ public class MeetingEntity {
     @OneToOne(mappedBy = "meeting")
     private MeetingPredictEntity meetingPredict;
 
-    @OneToOne(mappedBy = "meeting")
-    private StrategicScoreEntity strategicScore;
+    @OneToMany(mappedBy = "meeting", fetch = FetchType.LAZY)
+    private Set<StrategicScoreEntity> strategicScore;
 
     @OneToMany(mappedBy = "meeting", fetch = FetchType.LAZY)
     private Set<PerformanceScoreEntity> performanceScores;

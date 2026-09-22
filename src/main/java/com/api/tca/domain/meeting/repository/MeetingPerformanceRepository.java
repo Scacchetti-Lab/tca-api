@@ -1,4 +1,4 @@
-package com.api.tca.domain.meeting.mapper;
+package com.api.tca.domain.meeting.repository;
 
 import com.api.tca.domain.meeting.entity.MeetingAnalysePerformanceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

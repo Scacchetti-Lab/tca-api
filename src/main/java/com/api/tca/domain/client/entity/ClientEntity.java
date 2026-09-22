@@ -54,6 +54,8 @@ public class ClientEntity {
 
     private String segment;
 
+    private BigDecimal score;
+
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private Set<MeetingEntity> meetings;
 

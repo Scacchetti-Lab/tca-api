@@ -32,6 +32,7 @@ import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
 import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
 import com.api.tca.domain.meeting.validations.predict.MeetingPredictValidation;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
+import com.api.tca.domain.score.entity.StrategicScoreEntity;
 import com.api.tca.domain.score.service.ScoreService;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
@@ -51,6 +52,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -366,15 +368,13 @@ public class MeetingService {
 
         savedMeeting.setMeetingAnalysePerformance(perfEntity);
         savedMeeting.setMeetingAnalyseStrategic(stratEntity);
-        scoreService.saveScorePoints(this, savedMeeting, client);
+        scoreService.saveScorePoints(this, savedMeeting);
     }
 
     @Transactional
     public void updateMeetingScores(UUID meetingId) {
         var meeting = getMeetingEntityById(meetingId);
-        var client = meeting.getClient();
-
-        scoreService.saveScorePoints(this, meeting, client);
+        scoreService.saveScorePoints(this, meeting);
     }
 
     @Transactional

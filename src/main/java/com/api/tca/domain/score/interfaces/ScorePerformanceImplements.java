@@ -6,7 +6,7 @@ import com.api.tca.domain.meeting.service.MeetingService;
 
 import java.math.BigDecimal;
 
-public interface ScoreImplements {
+public interface ScorePerformanceImplements {
     void setScorePoints(MeetingService meetingService, MeetingEntity entity);
     Integer calculateBaseScore(MeetingAnalysePerformanceEntity entity);
     BigDecimal calculateFinalScore(Integer baseScore, Double multi);

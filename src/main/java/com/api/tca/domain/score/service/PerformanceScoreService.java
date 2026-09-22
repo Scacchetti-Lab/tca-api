@@ -9,7 +9,7 @@ import com.api.tca.domain.salesperson.service.SalespersonService;
 import com.api.tca.domain.score.dto.serviceParams.PerformancePointsDto;
 import com.api.tca.domain.score.entity.PerformanceScoreEntity;
 import com.api.tca.domain.score.enums.StreakType;
-import com.api.tca.domain.score.interfaces.ScoreImplements;
+import com.api.tca.domain.score.interfaces.ScorePerformanceImplements;
 import com.api.tca.domain.score.repository.PerformanceScoreRepository;
 import com.api.tca.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class PerformanceScoreService implements ScoreImplements {
+public class PerformanceScoreService implements ScorePerformanceImplements {
 
     @Autowired
     private PerformanceScoreRepository scoreRepository;
@@ -161,7 +161,7 @@ public class PerformanceScoreService implements ScoreImplements {
         var points = new PerformancePointsDto(entity);
         return (int) Math.round(
                 (points.engagement() + points.communication() + points.objectionHandling() + points.opportunities())
-                        - points.missedOpportunities()
+                        - points.missedOpportunities() + 8
         );
     }
 

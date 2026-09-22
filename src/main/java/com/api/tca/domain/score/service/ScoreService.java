@@ -17,19 +17,8 @@ public class ScoreService {
     @Autowired
     private StrategicScoreService strategicPerformance;
 
-    public void saveScorePoints(MeetingService meetingService, MeetingEntity meeting, ClientEntity client) {
-        //calculateStrategicBaseScore(client);
-        calculatePerformanceBaseScore(meetingService, meeting);
-    }
-
-
-    private void calculateStrategicBaseScore(ClientEntity client) {
-        Set<MeetingEntity> meetings = client.getMeetings();
-
-
-    }
-
-    private void calculatePerformanceBaseScore(MeetingService meetingService, MeetingEntity meetingToAnalyse) {
-        performanceService.setScorePoints(meetingService, meetingToAnalyse);
+    public void saveScorePoints(MeetingService meetingService, MeetingEntity meeting) {
+        strategicPerformance.setScorePoints(meeting);
+        //performanceService.setScorePoints(meetingService, meeting);
     }
 }
