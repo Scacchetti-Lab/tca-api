@@ -9,6 +9,7 @@ import com.api.tca.domain.meeting.dto.response.*;
 import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
 import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
+import com.api.tca.domain.meeting.service.MeetingVoicerService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.user.enums.ProfileTypes;
 import com.api.tca.domain.user.service.TokenService;
@@ -22,6 +23,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -35,6 +37,9 @@ public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
+
+    @Autowired
+    private MeetingVoicerService meetingVoicerService;
 
     @Autowired
     private TokenService tokenService;
@@ -62,6 +67,11 @@ public class MeetingController {
         var data = meetingService.createMeeting(request);
         URI meetingUri = uriBuilder.path("/meeting/{id}").buildAndExpand(data.id()).toUri();
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada", data));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(@RequestParam("audio") MultipartFile audio) {
+        // TODO: Montar método que vai receber o arquivo e enviar para o python via Webhook
     }
 
     @PostMapping("/new-analyse")

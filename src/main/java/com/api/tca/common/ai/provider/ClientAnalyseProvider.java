@@ -8,6 +8,7 @@ import com.api.tca.common.ai.dto.response.PredictResponseDto;
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.exception.custom.FailOnPredictException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,9 @@ import java.util.UUID;
 
 @Component
 public class ClientAnalyseProvider {
+
     @Autowired
+    @Qualifier("aiRestClient")
     private RestClient restClient;
 
     public void addClientEmbeds(UUID clientId) {

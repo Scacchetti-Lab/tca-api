@@ -5,6 +5,7 @@ import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.ai.dto.response.chat.ChatBotFirstResponse;
 import com.api.tca.common.ai.dto.response.chat.ChatBotProviderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestClient;
 public class ChatBotProvider {
 
     @Autowired
+    @Qualifier("aiRestClient")
     private RestClient restClient;
 
     public ResponseModelDto<ChatBotFirstResponse> startChat(String input) {
