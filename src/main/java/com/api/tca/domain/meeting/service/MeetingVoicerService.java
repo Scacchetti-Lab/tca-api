@@ -1,6 +1,7 @@
 package com.api.tca.domain.meeting.service;
 
 import com.api.tca.common.helpers.AudioSignature;
+import com.api.tca.common.voicer.dto.response.BaseResponseDto;
 import com.api.tca.common.voicer.provider.VoicerProvider;
 import com.api.tca.domain.meeting.dto.response.voicer.TranscriptVoicerDto;
 import com.api.tca.domain.meeting.exception.rules.InvalidFileUploadedException;
@@ -27,10 +28,10 @@ public class MeetingVoicerService {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "m4a", "wav", "ogg", "opus", "aac", "flac", "webm");
 
-    public boolean checkFile(MultipartFile file) {
+    public boolean checkFile(MultipartFile file)  {
         try (InputStream in = file.getInputStream()) {
             if (file.isEmpty()) return false;
-            String ext = Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf("."));
+            String ext = Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf(".")).substring(1);
             if (!ALLOWED_EXTENSIONS.contains(ext)) return false;
             byte[] header = in.readNBytes(AudioSignature.HEADER_SIZE);
 
@@ -42,10 +43,16 @@ public class MeetingVoicerService {
         }
     }
 
-    public TranscriptVoicerDto transcriptAudio(MultipartFile file) {
-        if (!checkFile(file))
-            throw new InvalidFileUploadedException("Transcrição enviada, não é um arquivo de áudio suportado.");
+    public BaseResponseDto<?> sendAuditoToTranscript(MultipartFile file) {
+        try (InputStream in = file.getInputStream()) {
+            if (!checkFile(file))
+                throw new InvalidFileUploadedException("Transcrição enviada, não é um arquivo de áudio suportado.");
 
-        var data = voicerProvider.transcriptAudio(file);
+            return voicerProvider.transcriptAudio(file);
+        }
+        catch (IOException ioex) {
+            log.error(ioex);
+        }
+        return null;
     }
 }

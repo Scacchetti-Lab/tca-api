@@ -2,11 +2,13 @@ package com.api.tca.domain.meeting.controller;
 
 import com.api.tca.common.helpers.ProfileTypeByLabel;
 import com.api.tca.common.model.ApiResponse;
+import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.common.model.dto.PredictRequestDto;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
 import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
+import com.api.tca.domain.meeting.enums.AudioTranscriptType;
 import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.meeting.service.MeetingVoicerService;
@@ -21,12 +23,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -69,9 +74,16 @@ public class MeetingController {
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada", data));
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(@RequestParam("audio") MultipartFile audio) {
+    @PostMapping(path = "/live", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(@RequestParam("audio") MultipartFile audio, @RequestParam("type") AudioTranscriptType type) throws IOException {
         // TODO: Montar método que vai receber o arquivo e enviar para o python via Webhook
+        var response = meetingVoicerService.sendAuditoToTranscript(audio);
+        if (response == null)
+            return ResponseEntity.internalServerError().build();
+        if (!Objects.equals(response.status(), "202"))
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(new FailureResult<>(response.message()));
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new SuccessResult<>(response.message(), null));
     }
 
     @PostMapping("/new-analyse")
