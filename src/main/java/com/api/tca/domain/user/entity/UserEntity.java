@@ -5,6 +5,7 @@ import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.chat.entity.AiSessionEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.salesperson.entity.SalespersonEntity;
+import com.api.tca.domain.tenant.entity.TenantEntity;
 import com.api.tca.domain.user.dto.user.RegisterRequestDto;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.service.UserService;
@@ -89,6 +90,10 @@ public class UserEntity {
 
     @OneToOne(mappedBy = "user")
     private SalespersonEntity salesperson;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private TenantEntity tenant;
 
     public UserEntity(RegisterRequestDto dto, ProfileEntity profile, AddressEntity address, UserEntity ownerUser) {
         this.fullName = dto.fullName();

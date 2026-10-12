@@ -13,11 +13,11 @@ import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
 import com.api.tca.domain.meeting.service.MeetingVoicerService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
-import com.api.tca.domain.user.enums.ProfileTypes;
 import com.api.tca.domain.user.service.TokenService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -75,9 +75,16 @@ public class MeetingController {
     }
 
     @PostMapping(path = "/live", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(@RequestParam("audio") MultipartFile audio, @RequestParam("type") AudioTranscriptType type) throws IOException {
-        // TODO: Montar método que vai receber o arquivo e enviar para o python via Webhook
-        var response = meetingVoicerService.sendAuditoToTranscript(audio);
+    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(
+            @RequestParam("audio") MultipartFile audio,
+            @RequestParam("type") AudioTranscriptType type,
+            @RequestParam(value = "clientId", required = false) UUID externalClientId,
+            HttpServletRequest httpRequest) {
+        var fullUrl = httpRequest.getRequestURL().toString();
+        var apiUrl = fullUrl.substring(0, fullUrl.indexOf("/meeting"));
+        var request = new MeetingLiveDto(type, externalClientId, tokenService.getAuthenticatedUser(httpRequest));
+
+        var response = meetingVoicerService.sendAudioToTranscript(audio, request, apiUrl);
         if (response == null)
             return ResponseEntity.internalServerError().build();
         if (!Objects.equals(response.status(), "202"))
@@ -166,13 +173,13 @@ public class MeetingController {
     }
 
     @PatchMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<MinimalMeetingDto>> completeMeeting(@PathVariable UUID meetingId) {
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> completeMeeting(@PathVariable("id") UUID meetingId) {
         var updatedMeeting = meetingService.completeMeeting(meetingId);
         return ResponseEntity.ok(new SuccessResult<>("Reunião Concluída", updatedMeeting));
     }
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable UUID meetingId) {
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable("id") UUID meetingId) {
         var updatedMeeting = meetingService.cancelMeeting(meetingId);
         return ResponseEntity.ok(new SuccessResult<>("Reunião Cancelada", updatedMeeting));
     }

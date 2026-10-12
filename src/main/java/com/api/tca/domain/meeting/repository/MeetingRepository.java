@@ -14,11 +14,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+// TODO: Atualizar Repository para buscar pelo tenantId
 public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
     Page<MeetingEntity> findAllByIsDeletedFalse(Pageable pageable);
     Optional<MeetingEntity> findByIdAndIsDeletedFalse(UUID id);
 
-    @Query("SELECT m FROM MeetingEntity m JOIN FETCH m.client WHERE m.id = :id AND m.isDeleted = false")
+    @Query("SELECT m FROM MeetingEntity m LEFT JOIN FETCH m.mtClient mc LEFT JOIN FETCH mc.client LEFT JOIN FETCH m.tenant WHERE m.id = :id AND m.isDeleted = false")
     Optional<MeetingEntity> findByIdWithClient(UUID id);
 
     @Query("SELECT m FROM MeetingEntity m JOIN m.users u WHERE u.id = :userId AND m.isDeleted = false")
@@ -34,11 +35,15 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
     @Query("SELECT m FROM MeetingEntity m JOIN m.users u " +
             "WHERE u.id = :userId " +
             "AND m.scheduled <= CURRENT_TIMESTAMP " +
+            "AND m.isDeleted = false " +
             "ORDER BY m.scheduled DESC")
     List<MeetingEntity> findFirstLastByUserId(@Param("userId") UUID userId, Pageable pageable);
 
-    Page<MeetingEntity> findAllByClientIdAndIsDeletedFalse(Pageable pageable, UUID clientId);
-    Set<MeetingEntity> findAllByClientIdAndIsDeletedFalse(UUID clientId);
+    @Query("SELECT m FROM MeetingEntity m WHERE m.mtClient.client.id = :clientId AND m.isDeleted = false")
+    Page<MeetingEntity> findAllByClientIdAndIsDeletedFalse(Pageable pageable, @Param("clientId") UUID clientId);
+
+    @Query("SELECT m FROM MeetingEntity m WHERE m.mtClient.client.id = :clientId AND m.isDeleted = false")
+    Set<MeetingEntity> findAllByClientIdAndIsDeletedFalse(@Param("clientId") UUID clientId);
 
     Boolean existsMeetingsByTotvsIdAndIsDeletedFalse(String totvsId);
 
@@ -47,7 +52,7 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
 
     @Query("""
         SELECT m FROM MeetingEntity m
-        WHERE m.client.id = :clientId
+        WHERE m.mtClient.client.id = :clientId
         AND m.status = MeetingStatus.SCHEDULED
         AND m.isDeleted = false
         AND m.scheduled > CURRENT_TIMESTAMP
@@ -57,7 +62,7 @@ public interface MeetingRepository extends JpaRepository<MeetingEntity, UUID> {
 
     @Query("""
         SELECT m FROM MeetingEntity m
-        WHERE m.client.id = :clientId
+        WHERE m.mtClient.client.id = :clientId
         AND m.status = MeetingStatus.COMPLETED
         AND m.isDeleted = false
         AND m.scheduled <= CURRENT_TIMESTAMP

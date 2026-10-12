@@ -4,10 +4,12 @@ import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.common.model.ApiResponse;
 import com.api.tca.common.model.FailureResult;
+import com.api.tca.common.voicer.exception.InvalidKeyException;
 import com.api.tca.domain.chat.exception.InvalidTItleException;
 import com.api.tca.domain.chat.exception.MessageSendFailedException;
 import com.api.tca.domain.email.exception.EmailFailed;
 import com.api.tca.domain.meeting.exception.analyses.FailedOnEmbeddingException;
+import com.api.tca.domain.meeting.exception.rules.InvalidFileUploadedException;
 import com.api.tca.domain.meeting.exception.rules.MeetingAlreadyExistsException;
 import com.api.tca.domain.meeting.exception.rules.MeetingValidateException;
 import com.api.tca.domain.meeting.exception.rules.StakeholderListAlreadyAddedException;
@@ -23,7 +25,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,12 +36,37 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpClientErrorException.class)
     public ResponseEntity<ApiResponse<ResponseModelDto<?>>> handleHttpClientErrorException(HttpClientErrorException ex) {
+        ResponseModelDto<?> body = null;
+        String message = ex.getStatusText();
+        try {
+            body = ex.getResponseBodyAs(ResponseModelDto.class);
+            if (body != null && body.message() != null) message = body.message();
+        } catch (Exception ignored) {}
         var serverResponse = new ApiResponse<ResponseModelDto<?>>(
-                ex.getStatusCode().toString(),
-                new ObjectMapper().readValue(ex.getMessage(), ResponseModelDto.class).message(),
-                ex.getResponseBodyAs(ResponseModelDto.class), false
+                ex.getStatusCode().toString(), message, body, false
         );
         return ResponseEntity.status(ex.getStatusCode()).body(serverResponse);
+    }
+
+    @ExceptionHandler({HttpServerErrorException.class, ResourceAccessException.class})
+    public ResponseEntity<ApiResponse<?>> handleExternalServiceFailure(Exception ex) {
+        var status = ex instanceof HttpServerErrorException
+                ? HttpStatus.BAD_GATEWAY : HttpStatus.SERVICE_UNAVAILABLE;
+        var serverResponse = new FailureResult<>(HttpStatus.UNSUPPORTED_MEDIA_TYPE, String.valueOf(status.value()),
+                "Falha ao se comunicar com o serviço externo");
+        return ResponseEntity.status(status).body(serverResponse);
+    }
+
+    @ExceptionHandler(InvalidFileUploadedException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidFile(InvalidFileUploadedException ex) {
+        var serverResponse = new FailureResult<>(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(serverResponse);
+    }
+
+    @ExceptionHandler(InvalidKeyException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidVoicerKeyException(InvalidKeyException ex) {
+        var serverResponse = new FailureResult<>(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(serverResponse);
     }
 
     @ExceptionHandler({FailedOnEmbeddingException.class, TranscriptProcessErrorException.class})
@@ -48,7 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FailOnPredictException.class)
-    public ResponseEntity<ApiResponse<?>> handlePredictConflict(RuntimeException ex) {
+    public ResponseEntity<ApiResponse<?>> handlePredictConflict(FailOnPredictException ex) {
         var serverResponse = new FailureResult<>(HttpStatus.CONFLICT, ex.getMessage(), null);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(serverResponse);
     }

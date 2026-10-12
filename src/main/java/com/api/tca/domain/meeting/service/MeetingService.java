@@ -8,7 +8,6 @@ import com.api.tca.common.ai.dto.response.transcript.TranscriptAnalyseDto;
 import com.api.tca.common.exception.custom.FailOnPredictException;
 import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.dto.client.UpdateClientDto;
-import com.api.tca.domain.client.dto.predict.ClientPredictResponseDto;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.client.service.ClientService;
 import com.api.tca.domain.email.dto.email.EmailRequestDto;
@@ -16,24 +15,24 @@ import com.api.tca.domain.email.service.EmailService;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
 import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
+import com.api.tca.domain.meeting.entity.MeetingClientEntity;
 import com.api.tca.domain.meeting.entity.MeetingEntity;
 import com.api.tca.domain.meeting.entity.MeetingPredictEntity;
 import com.api.tca.domain.meeting.entity.MeetingStakeholdersEntity;
-import com.api.tca.domain.meeting.enums.MeetingPriority;
-import com.api.tca.domain.meeting.enums.MeetingStatus;
-import com.api.tca.domain.meeting.enums.MeetingUserSource;
-import com.api.tca.domain.meeting.enums.PredictProcessStatus;
+import com.api.tca.domain.meeting.enums.*;
 import com.api.tca.domain.meeting.exception.TranscriptAlreadyProcessedException;
 import com.api.tca.domain.meeting.exception.rules.*;
 import com.api.tca.domain.meeting.mapper.MeetingMapper;
+import com.api.tca.domain.meeting.repository.MeetingClientRepository;
 import com.api.tca.domain.meeting.repository.MeetingPredictRepository;
 import com.api.tca.domain.meeting.repository.MeetingRepository;
 import com.api.tca.domain.meeting.repository.MeetingStakeHolderRepository;
 import com.api.tca.domain.meeting.validations.meetings.MeetingValidate;
 import com.api.tca.domain.meeting.validations.predict.MeetingPredictValidation;
 import com.api.tca.domain.meeting.validations.stakeholder.StakeholderValidate;
-import com.api.tca.domain.score.entity.StrategicScoreEntity;
 import com.api.tca.domain.score.service.ScoreService;
+import com.api.tca.domain.tenant.entity.TenantEntity;
+import com.api.tca.domain.tenant.service.TenantService;
 import com.api.tca.domain.transcript.dto.TranscriptBasicDto;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
 import com.api.tca.domain.transcript.enums.TranscriptStatus;
@@ -52,7 +51,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -90,6 +88,9 @@ public class MeetingService {
     private ClientService clientService;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -97,6 +98,9 @@ public class MeetingService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private MeetingClientRepository meetingClientRepository;
 
     @Autowired
     private List<StakeholderValidate> shValidator;
@@ -154,6 +158,13 @@ public class MeetingService {
         return new MeetingDetailedDto(entity, stakeHolders);
     }
 
+    public UserEntity getAudioOwnerByMeetingId(UUID meetingId) {
+        var meeting = getMeetingEntityById(meetingId);
+        var user = meeting.getUsers().stream().findFirst().orElse(null);
+        if (user == null)
+            user = userRepository.findUserByEmailAndIsDeletedFalse("admin@tca.com");
+        return user;
+    }
 
     public MeetingPredictEntity getPredictByMeetingId(UUID id) {
         return predictRepository.findByMeetingId(id).orElseThrow(() -> new MeetingNotFoundException("Previsão não encontrada"));
@@ -240,11 +251,38 @@ public class MeetingService {
             throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
 
         var entity = new MeetingEntity(request);
-        entity.setClient(findMeetingClientByEmailOrName(request));
+        var meetingRelationship = new MeetingClientEntity(entity.getId(), entity, findMeetingClientByEmailOrName(request));
+        entity.setMtClient(meetingRelationship);
         mtValidator.forEach(v -> v.validate(entity));
 
         var result = meetingRepository.save(entity);
         eventPublisher.publishEvent(new MeetingTranscriptProcessDto(entity.getId(), null, null));
+        return new MeetingBasicDataDto(result);
+    }
+
+    @Transactional
+    public MeetingBasicDataDto createDefaultLiveMeeting(int durationMinutes, MeetingLiveDto liveDto) {
+        if (liveDto.type() == AudioTranscriptType.STREAM)
+            throw new IllegalArgumentException("Live meeting type not implemented yet");
+
+        var userOwner = userRepository.findUserByEmailAndIsDeletedFalse(liveDto.tokenData().email());
+        if (userOwner == null)
+            userOwner = userRepository.findUserByEmailAndIsDeletedFalse("admin@tca.com");
+        if (userOwner == null)
+            throw new UserNotFound("Usuário responsável pela reunião não foi encontrado");
+
+        MeetingEntity entity;
+        if (liveDto.type() == AudioTranscriptType.EXTERNAL)
+            entity = createAudioTemplateMeeting(durationMinutes, clientService.getClientById(liveDto.externalClientId()));
+        else if (liveDto.type() == AudioTranscriptType.INTERNAL)
+            entity = createAudioTemplateMeeting(durationMinutes, userOwner.getTenant());
+        else
+            throw new IllegalArgumentException("Tipo de reunião informado é inválido");
+
+        entity.setScope(liveDto.type());
+        entity.setUsers(new HashSet<>(Set.of(userOwner)));
+        var result = meetingRepository.save(entity);
+
         return new MeetingBasicDataDto(result);
     }
 
@@ -254,7 +292,8 @@ public class MeetingService {
             throw new MeetingAlreadyExistsException("Reunião de TotvsId " + request.totvsId()  + " já cadastrada no sistema");
 
         var entity = new MeetingEntity(request);
-        entity.setClient(findMeetingClientByEmailOrName(request));
+        var meetingRelationship = new MeetingClientEntity(entity.getId(), entity, findMeetingClientByEmailOrName(request));
+        entity.setMtClient(meetingRelationship);
         if (entity.getScheduled().isAfter(BrazilRealTime.now()))
             throw new MeetingValidateException("Reuniões com transcrição não podem terem sido agendadas para o futuro");
 
@@ -342,12 +381,11 @@ public class MeetingService {
         MeetingEntity meeting = getMeetingEntityById(meetingId);
         ClientEntity client = meeting.getClient();
         var description = process.basicDescription();
-        var strategic = process.analytic().strategic();
         var performance = process.analytic().performance();
 
         if (meeting.getClientRepresent() == null || meeting.getClientRepresent().isEmpty())
             meeting.setClientRepresent(description.companyRepresentor());
-        if (client.getSegment() == null || client.getSegment().isEmpty()) {
+        if (client != null && (client.getSegment() == null || client.getSegment().isEmpty())) {
             client.setSegment(description.segment());
             clientService.updateClient(client.getId(), new UpdateClientDto(client.getSegment()));
         }
@@ -359,16 +397,24 @@ public class MeetingService {
 
         addStakeholdersToTheMeeting(meeting.getId(), stakeholdersList, true);
 
-        meeting.setPriority(setMeetingPriority(performance.insights().priority(), strategic.insights().priority()));
-        meeting.setRating((performance.insights().rating() + strategic.insights().rating()) / 2);
+        meeting.setRating(performance.insights().rating());
+        meeting.setPriority(performance.insights().priority());
 
-        var perfEntity = performanceService.addMeetingPerformanceAnalysed(meeting, performance);
-        var stratEntity = strategicService.addMeetingStrategicAnalysed(meeting, strategic);
         var savedMeeting = meetingRepository.save(meeting);
-
+        var perfEntity = performanceService.addMeetingPerformanceAnalysed(savedMeeting, performance);
         savedMeeting.setMeetingAnalysePerformance(perfEntity);
-        savedMeeting.setMeetingAnalyseStrategic(stratEntity);
-        scoreService.saveScorePoints(this, savedMeeting);
+
+        if (savedMeeting.getScope() == MeetingScope.EXTERNAL) {
+            var strategic = process.analytic().strategic()
+                    .orElseThrow(() -> new TranscriptProcessErrorException("Análise estratégica não retornada para reunião externa"));
+
+            savedMeeting.setRating((performance.insights().rating() + strategic.insights().rating()) / 2);
+            savedMeeting.setPriority(setMeetingPriority(performance.insights().priority(), strategic.insights().priority()));
+
+            var stratEntity = strategicService.addMeetingStrategicAnalysed(savedMeeting, strategic);
+            savedMeeting.setMeetingAnalyseStrategic(stratEntity);
+            scoreService.saveScorePoints(this, savedMeeting);
+        }
     }
 
     @Transactional
@@ -426,13 +472,21 @@ public class MeetingService {
             meetingEntity.setTranscript(addedTranscript);
         }
 
+
+        ClientContextRequestDto clientContext = null;
+        if (meetingEntity.getScope() == MeetingScope.EXTERNAL) {
+            var client = meetingEntity.getClient();
+            clientContext = new ClientContextRequestDto(
+                    client.getName(),
+                    client.getStatus(),
+                    lastMeetingsByClient(client));
+        }
+
         var transcriptDto = new TranscriptProcessRequestDto(
                 meetingEntity.getTranscript().getId(),
                 loggedIn,
-                new ClientContextRequestDto(
-                        meetingEntity.getClient().getName(),
-                        meetingEntity.getClient().getStatus(),
-                        lastMeetingsByClient(meetingEntity.getClient())));
+                clientContext,
+                meetingEntity.getScope());
 
         meetingRepository.save(meetingEntity);
         eventPublisher.publishEvent(new MeetingTranscriptProcessDto(meetingEntity.getId(), transcriptDto, solicitedUser));
@@ -481,12 +535,45 @@ public class MeetingService {
         predictRepository.save(predictEntity);
     }
 
+    @Transactional
+    public MeetingEntity createAudioTemplateMeeting(int durationMinutes, ClientEntity client) {
+        var defaultMeeting = createDefaultMeeting(durationMinutes);
+        var relationship = new MeetingClientEntity(defaultMeeting.getId(), defaultMeeting, client);
+        defaultMeeting.setMtClient(relationship);
+        meetingClientRepository.save(relationship);
+        return defaultMeeting;
+    }
+
+    @Transactional
+    public MeetingEntity createAudioTemplateMeeting(int durationMinutes, TenantEntity tenant) {
+        var defaultMeeting = createDefaultMeeting(durationMinutes);
+        defaultMeeting.setTenant(tenant);
+        return defaultMeeting;
+    };
+
+    public MeetingEntity createDefaultMeeting(int durationMinutes) {
+        var meeting = new MeetingEntity();
+        var rdn = new Random();
+        var title = String.format("Reunião Ao Vivo #%04d", rdn.nextInt(9999));
+        meeting.setTitle(title);
+        meeting.setSummary("Reunião gravada ao vivo em processamento pelo sistema.");
+        meeting.setScheduled(BrazilRealTime.now());
+        meeting.setStatus(MeetingStatus.COMPLETED);
+        meeting.setIsDeleted(false);
+        meeting.setRating(0);
+        meeting.setDurationMin(durationMinutes);
+        meeting.setPerformanceAvg(0);
+        meeting.setRating(0);
+
+        return meeting;
+    }
+
     private Map<String, String> buildCommonReplacements(UserEntity user, MeetingEntity meetingEntity) {
         var client = meetingEntity.getClient();
         Map<String, String> bodyReplace = new HashMap<>();
         bodyReplace.put("{{user_first_name}}", user.getFullName());
         bodyReplace.put("{{meeting_title}}", meetingEntity.getTitle());
-        bodyReplace.put("{{client_name}}", client.getName());
+        bodyReplace.put("{{client_name}}", client != null ? client.getName() : meetingEntity.getTenant().getFantasyName());
         bodyReplace.put("{{meeting_date}}", meetingEntity.getScheduled().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         bodyReplace.put("{{current_year}}", String.valueOf(LocalDateTime.now().getYear()));
         return bodyReplace;

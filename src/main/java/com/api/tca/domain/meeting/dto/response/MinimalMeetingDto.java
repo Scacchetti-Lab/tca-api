@@ -16,7 +16,7 @@ public record MinimalMeetingDto(
                 dto.getId(),
                 dto.getTitle(),
                 dto.getStatus(),
-                dto.getClient().getFantasyName()
+                dto.getClient() != null ? dto.getClient().getFantasyName() : dto.getTenant().getFantasyName()
         );
     }
 }

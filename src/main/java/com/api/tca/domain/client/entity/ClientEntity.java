@@ -57,9 +57,6 @@ public class ClientEntity {
     private BigDecimal score;
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
-    private Set<MeetingEntity> meetings;
-
-    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private Set<MeetingAnalyseStrategicEntity> strategicAnalyses;
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
