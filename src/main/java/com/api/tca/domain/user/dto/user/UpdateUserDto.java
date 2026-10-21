@@ -9,6 +9,8 @@ public record UpdateUserDto(
         String mobilePhone,
         String profilePhoto,
         Boolean useMfa,
+        @Pattern(regexp = "TCA-SQD-[0-9]+")
+        String squadCode,
 
         AddressDto address
 ) { }

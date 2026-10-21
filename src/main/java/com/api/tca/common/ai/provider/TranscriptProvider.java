@@ -5,6 +5,7 @@ import com.api.tca.common.ai.dto.request.TranscriptProcessRequestDto;
 import com.api.tca.common.ai.dto.response.ResponseModelDto;
 import com.api.tca.common.ai.dto.response.transcript.TranscriptAnalyseDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestClient;
 public class TranscriptProvider {
 
     @Autowired
+    @Qualifier("aiRestClient")
     private RestClient restClient;
 
     public ResponseModelDto<TranscriptAnalyseDto> processTranscript(TranscriptProcessRequestDto request) {

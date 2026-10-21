@@ -31,6 +31,8 @@ public class SecurityConfig {
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(HttpMethod.POST, "/auth").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/webhook/meeting").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user/forgot-password").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                                 .requestMatchers("/health/**").permitAll()

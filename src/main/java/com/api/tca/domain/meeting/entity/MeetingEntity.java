@@ -4,8 +4,13 @@ import com.api.tca.common.helpers.BrazilRealTime;
 import com.api.tca.domain.client.entity.ClientEntity;
 import com.api.tca.domain.meeting.dto.request.MinimalRegisterMeetingDto;
 import com.api.tca.domain.meeting.dto.request.RegisterMeetingDto;
+import com.api.tca.domain.meeting.enums.AudioTranscriptType;
 import com.api.tca.domain.meeting.enums.MeetingPriority;
+import com.api.tca.domain.meeting.enums.MeetingScope;
 import com.api.tca.domain.meeting.enums.MeetingStatus;
+import com.api.tca.domain.score.entity.PerformanceScoreEntity;
+import com.api.tca.domain.score.entity.StrategicScoreEntity;
+import com.api.tca.domain.tenant.entity.TenantEntity;
 import com.api.tca.domain.transcript.entity.TranscriptEntity;
 import com.api.tca.domain.user.entity.UserEntity;
 import jakarta.persistence.*;
@@ -63,14 +68,20 @@ public class MeetingEntity {
     @Enumerated(EnumType.STRING)
     private MeetingPriority priority;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id")
-    private ClientEntity client;
+    @OneToOne(mappedBy = "meeting")
+    private MeetingClientEntity mtClient;
 
     private Boolean isDeleted;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
     private Integer rating;
+
+    @Enumerated(EnumType.STRING)
+    private MeetingScope scope;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private TenantEntity tenant;
 
     @OneToOne(mappedBy = "meeting")
     private MeetingAnalysePerformanceEntity meetingAnalysePerformance;
@@ -81,6 +92,15 @@ public class MeetingEntity {
     @OneToOne(mappedBy = "meeting")
     private MeetingPredictEntity meetingPredict;
 
+    @OneToMany(mappedBy = "meeting", fetch = FetchType.LAZY)
+    private Set<StrategicScoreEntity> strategicScore;
+
+    @OneToMany(mappedBy = "meeting", fetch = FetchType.LAZY)
+    private Set<PerformanceScoreEntity> performanceScores;
+
+    public ClientEntity getClient() {
+        return mtClient != null ? mtClient.getClient() : null;
+    }
     public MeetingEntity(RegisterMeetingDto dto) {
         this.title = dto.title();
         this.totvsId = dto.totvsId();
@@ -93,10 +113,11 @@ public class MeetingEntity {
         this.durationMin = 0;
         this.status = MeetingStatus.SCHEDULED;
         this.rating = 0;
+        this.scope = MeetingScope.EXTERNAL;
     }
 
     public MeetingEntity(MinimalRegisterMeetingDto dto) {
-        this.title = "Reunião TOTVS";
+        this.title = dto.title();
         this.totvsId = dto.totvsId();
         this.scheduled = BrazilRealTime.cast(dto.scheduledAt());
         this.clientRepresent = dto.clientRepresent();
@@ -105,15 +126,22 @@ public class MeetingEntity {
         this.durationMin = 0;
         this.status = MeetingStatus.COMPLETED;
         this.rating = 0;
+        this.scope = MeetingScope.EXTERNAL;
     }
 
     public void removeEmployee(UserEntity user) {
-        this.users.remove(user);
-        user.getMeetings().remove(this);
+        if (this.users != null) {
+            this.users.remove(user);
+        }
+        if (user.getMeetings() != null) {
+            user.getMeetings().remove(this);
+        }
     }
 
-    public void addMultiplesEmployee(Set<UserEntity> users) {
-        this.users.addAll(users);
-        users.forEach(u -> u.getMeetings().add(this));
+    public void setScope(AudioTranscriptType type) {
+        switch (type) {
+            case AudioTranscriptType.INTERNAL, AudioTranscriptType.STREAM ->  this.scope = MeetingScope.INTERNAL;
+            case AudioTranscriptType.EXTERNAL ->  this.scope = MeetingScope.EXTERNAL;
+        }
     }
 }

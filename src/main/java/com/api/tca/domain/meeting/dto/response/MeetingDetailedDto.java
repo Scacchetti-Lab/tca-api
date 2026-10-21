@@ -38,7 +38,7 @@ public record MeetingDetailedDto(
                         entity.getSummary(),
                         stakeholders,
                         entity.getPerformanceAvg(),
-                        entity.getClient().getName(),
+                        entity.getClient() != null ? entity.getClient().getName() : entity.getTenant().getFantasyName(),
                         entity.getClientRepresent(),
                         entity.getMeetingAnalysePerformance() != null ? new PerformanceAnalyseDto(entity.getMeetingAnalysePerformance()) : null,
                         entity.getMeetingAnalyseStrategic() != null ? new StrategicAnalyseDto(entity.getMeetingAnalyseStrategic()) : null

@@ -6,12 +6,16 @@ import com.api.tca.domain.address.entity.AddressEntity;
 import com.api.tca.domain.address.service.AddressService;
 import com.api.tca.domain.email.dto.email.EmailRequestDto;
 import com.api.tca.domain.email.service.EmailService;
+import com.api.tca.domain.salesperson.entity.SalespersonEntity;
+import com.api.tca.domain.salesperson.service.SalespersonService;
+import com.api.tca.domain.squad.service.SquadService;
 import com.api.tca.domain.user.dto.auth.AuthResponseDto;
 import com.api.tca.domain.user.dto.auth.AuthenticateDto;
 import com.api.tca.domain.user.dto.user.*;
 import com.api.tca.domain.user.entity.UserEntity;
 import com.api.tca.domain.user.enums.UserStatus;
 import com.api.tca.domain.user.exception.PasswordsAreEquals;
+import com.api.tca.domain.user.exception.ProfileNotFound;
 import com.api.tca.domain.user.exception.UserNotFound;
 import com.api.tca.domain.user.mapper.UserMapper;
 import com.api.tca.domain.user.repository.UserRepository;
@@ -58,6 +62,12 @@ public class UserService implements UserDetailsService {
     private EmailService emailService;
 
     @Autowired
+    private SquadService squadService;
+
+    @Autowired
+    private SalespersonService salespersonService;
+
+    @Autowired
     private UserMapper mapper;
 
     public Page<UserResponseDto> findAllUsers(Pageable pageable) {
@@ -101,13 +111,25 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    public UserEntity getUserOwner(String username) {
+        String adminUsername = "tca.admin";
+        if (username == null)
+            return userRepository.findUserByUsernameAndIsDeletedFalse(adminUsername);
+
+        var user = userRepository.findUserByUsernameAndIsDeletedFalse(username);
+        if (user == null)
+            return userRepository.findUserByUsernameAndIsDeletedFalse(adminUsername);
+        return user;
+    }
+
     @Transactional
     public RegisterResponseDto registerUser(RegisterRequestDto request) {
         AddressEntity userAddress = addressService.findOrCreateAddressByPostalCode(request.address());
-
         var userProfile = profileService.getProfileByKey(request.profileType());
-        var newUser = userRepository.save(new UserEntity(request, userProfile, userAddress));
+        var userOwner = getUserOwner(request.createdByUsername());
 
+        var newUser = userRepository.save(new UserEntity(request, userProfile, userAddress, userOwner));
+        addUserProfileEntity(newUser, request.squadCode());
         return new RegisterResponseDto(newUser);
     }
 
@@ -187,6 +209,18 @@ public class UserService implements UserDetailsService {
         String lastName = names[names.length - 1];
 
         return String.format("%s.%s#%04d", firstName, lastName, random);
+    }
+
+    @Transactional
+    private void addUserProfileEntity(UserEntity user, String squadCode) {
+        var userProfile = user.getProfiles().stream().findFirst().orElseThrow(() -> new ProfileNotFound("Perfil não existe"));
+        var squadToAdd = squadService.findSquadByCode(squadCode);
+        if (profileService.isSalesPerson(userProfile)) {
+            var newSeller = salespersonService.saveSalesperson(user, squadToAdd);
+            user.setSalesperson(newSeller);
+        }
+        // TODO: Lógica para adicionar Manager tbm
+        userRepository.save(user);
     }
 
     private void sendForgotPasswordEmail(UserEntity user, String newPassword) {

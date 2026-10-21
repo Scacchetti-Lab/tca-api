@@ -1,5 +1,6 @@
 package com.api.tca.common.ai.dto.request;
 
+import com.api.tca.domain.meeting.enums.MeetingScope;
 import com.api.tca.domain.user.enums.ProfileTypes;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,6 +17,9 @@ public record TranscriptProcessRequestDto(
         ProfileTypes profile,
 
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        ClientContextRequestDto clientContext
+        ClientContextRequestDto clientContext,
+
+        @Enumerated(EnumType.STRING)
+        MeetingScope scope
 ) {
 }

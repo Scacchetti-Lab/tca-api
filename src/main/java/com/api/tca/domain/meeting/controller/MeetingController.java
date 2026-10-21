@@ -1,27 +1,37 @@
 package com.api.tca.domain.meeting.controller;
 
+import com.api.tca.common.helpers.ProfileTypeByLabel;
 import com.api.tca.common.model.ApiResponse;
+import com.api.tca.common.model.FailureResult;
 import com.api.tca.common.model.SuccessResult;
 import com.api.tca.common.model.dto.PredictRequestDto;
 import com.api.tca.domain.meeting.dto.request.*;
 import com.api.tca.domain.meeting.dto.response.*;
 import com.api.tca.domain.meeting.dto.response.predict.MeetingPredictResponseDto;
+import com.api.tca.domain.meeting.enums.AudioTranscriptType;
 import com.api.tca.domain.meeting.enums.SearchReference;
 import com.api.tca.domain.meeting.service.MeetingService;
+import com.api.tca.domain.meeting.service.MeetingVoicerService;
 import com.api.tca.domain.transcript.dto.TranscriptFormDataDto;
-import com.api.tca.domain.user.enums.ProfileTypes;
+import com.api.tca.domain.user.service.TokenService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -32,6 +42,12 @@ public class MeetingController {
 
     @Autowired
     private MeetingService meetingService;
+
+    @Autowired
+    private MeetingVoicerService meetingVoicerService;
+
+    @Autowired
+    private TokenService tokenService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetings(@PageableDefault(size = 5) Pageable pageable) {
@@ -58,23 +74,45 @@ public class MeetingController {
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada", data));
     }
 
-    @PostMapping(value = "/new-analyse")
+    @PostMapping(path = "/live", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<ApiResponse<?>> addMeetingFromBatchAudio(
+            @RequestParam("audio") MultipartFile audio,
+            @RequestParam("type") AudioTranscriptType type,
+            @RequestParam(value = "clientId", required = false) UUID externalClientId,
+            HttpServletRequest httpRequest) {
+        var fullUrl = httpRequest.getRequestURL().toString();
+        var apiUrl = fullUrl.substring(0, fullUrl.indexOf("/meeting"));
+        var request = new MeetingLiveDto(type, externalClientId, tokenService.getAuthenticatedUser(httpRequest));
+
+        var response = meetingVoicerService.sendAudioToTranscript(audio, request, apiUrl);
+        if (response == null)
+            return ResponseEntity.internalServerError().build();
+        if (!Objects.equals(response.status(), "202"))
+            return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(new FailureResult<>(response.message()));
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new SuccessResult<>(response.message(), null));
+    }
+
+    @PostMapping("/new-analyse")
     public ResponseEntity<ApiResponse<MeetingTranscriptBasicDto>> addMeetingTranscript(
+            HttpServletRequest httpRequest,
             @RequestBody @Valid MinimalRegisterMeetingDto request,
             UriComponentsBuilder uriBuilder)
     {
-        // TODO: Ao obter JWT, pegar o profiletype atual do usuário
-        var data = meetingService.createAndAnalyseMeetingByRequest(request, ProfileTypes.DIRECTOR);
+        var tokenData = tokenService.getAuthenticatedUser(httpRequest);
+        var data = meetingService.createAndAnalyseMeetingByRequest(request, ProfileTypeByLabel.get(tokenData.profile()), tokenData.email());
         URI meetingUri = uriBuilder.path("/meeting/{id}").buildAndExpand(data.meeting().id()).toUri();
         return ResponseEntity.created(meetingUri).body(new SuccessResult<>(HttpStatus.CREATED, "Reunião criada e transcrição em processamento", data));
     }
 
     @PutMapping("/{id}/analyse")
     public ResponseEntity<ApiResponse<MeetingTranscriptBasicDto>> analyseTranscriptMeetingById(
+            HttpServletRequest httpRequest,
             @PathVariable UUID id,
             @RequestBody @Valid TranscriptFormDataDto request) {
-        // TODO: Ao obter JWT, pegar o profiletype atual do usuário
-        var data = meetingService.findAndAnalyseMeetingById(id, request, ProfileTypes.DIRECTOR);
+
+        var tokenData = tokenService.getAuthenticatedUser(httpRequest);
+        var data = meetingService.findAndAnalyseMeetingById(id, request, ProfileTypeByLabel.get(tokenData.profile()), tokenData.email());
         return ResponseEntity.ok(new SuccessResult<>("Transcrição em Processamento", data));
     }
 
@@ -92,7 +130,8 @@ public class MeetingController {
 
     @GetMapping("/user/{id}")
     public ResponseEntity<ApiResponse<Page<MeetingBasicDataDto>>> getAllMeetingsByUser(@PathVariable UUID id, Pageable pageable) {
-        var data = meetingService.getAllMeetingByUserId(id, pageable);
+        var entities = meetingService.getAllMeetingByUserId(id, pageable);
+        var data = entities.map(MeetingBasicDataDto::new);
         return ResponseEntity.ok(new SuccessResult<>(data.stream().count() + " reuniões encontrada", data));
     }
 
@@ -134,13 +173,13 @@ public class MeetingController {
     }
 
     @PatchMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<MinimalMeetingDto>> completeMeeting(@PathVariable UUID meetingId) {
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> completeMeeting(@PathVariable("id") UUID meetingId) {
         var updatedMeeting = meetingService.completeMeeting(meetingId);
         return ResponseEntity.ok(new SuccessResult<>("Reunião Concluída", updatedMeeting));
     }
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable UUID meetingId) {
+    public ResponseEntity<ApiResponse<MinimalMeetingDto>> cancelMeeting(@PathVariable("id") UUID meetingId) {
         var updatedMeeting = meetingService.cancelMeeting(meetingId);
         return ResponseEntity.ok(new SuccessResult<>("Reunião Cancelada", updatedMeeting));
     }
@@ -149,5 +188,12 @@ public class MeetingController {
     public ResponseEntity<ApiResponse<MeetingPredictResponseDto>> predictNextClientMeetingBaseOnHistory(@RequestBody @Valid PredictRequestDto request) {
         var predict = meetingService.predictFutureMeeting(request.entityId(), request.reprocess());
         return ResponseEntity.status(HttpStatus.CREATED).body(new SuccessResult<>(HttpStatus.CREATED, "Previsão criada", predict));
+    }
+
+    @PostMapping("/{id}/score")
+    public ResponseEntity<ApiResponse<String>> setScorePoints(@PathVariable UUID id) {
+        meetingService.updateMeetingScores(id);
+        // TODO: DTO para retorno de scores
+        return ResponseEntity.ok(new SuccessResult<>(null, "Score recalculado"));
     }
 }

@@ -2,6 +2,7 @@ package com.api.tca.common.ai.provider;
 
 import com.api.tca.common.healthcheck.dto.HealthCheckStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -9,6 +10,7 @@ import org.springframework.web.client.RestClient;
 public class HealthCheckProvider {
 
     @Autowired
+    @Qualifier("aiRestClient")
     private RestClient restClient;
 
     public HealthCheckStatus healthCheck() {

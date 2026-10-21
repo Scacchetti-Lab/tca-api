@@ -31,4 +31,8 @@ public record StakeholderRegisterDto(
         public StakeholderRegisterDto(StakeholderDto dto) {
                 this(dto.name(), dto.role(), dto.side());
         }
+
+        public StakeholderRegisterDto(String name, String email, String username, String role) {
+                this(name, email, username, MeetingStakeholderSide.COMPANY, role, MeetingUserSource.SYSTEM);
+        }
 }

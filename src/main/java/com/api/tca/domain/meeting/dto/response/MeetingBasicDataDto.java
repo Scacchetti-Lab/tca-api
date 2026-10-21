@@ -21,7 +21,7 @@ public record MeetingBasicDataDto(
             entity.getId(),
             entity.getTitle(),
             entity.getSummary(),
-            entity.getClient().getName(),
+            entity.getClient() != null ? entity.getClient().getName() : entity.getTenant().getFantasyName(),
             entity.getScheduled(),
             entity.getStatus(),
             entity.getPriority()
